@@ -5,14 +5,18 @@ import pg from "pg";
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL is not defined. Please add it to your environment variables.");
+  console.error("DATABASE_URL is not defined in the environment variables.");
 }
 
+// Create a new pool with SSL enabled for production (Neon)
 const pool = new pg.Pool({ 
   connectionString,
-  ssl: connectionString.includes("localhost") || connectionString.includes("127.0.0.1") 
-    ? false 
-    : { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10, // Limit connections for serverless environments
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 const adapter = new PrismaPg(pool);
