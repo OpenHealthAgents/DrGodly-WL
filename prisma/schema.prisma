@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("user") // "user" | "admin" | "doctor"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  // Wellora Relations
+  intake      Intake?
+  eligibility Eligibility?
+  orders      Order[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model PendingIntake {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  userId      String?
+  currentStep String   @default("height")
+  data        Json     @default("{}")
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model Intake {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Identity (captured during intake)
+  firstName   String
+  lastName    String
+  email       String
+  phone       String
+  shippingState String
+
+  // Basic Bio
+  height      Float
+  weight      Float
+  goalWeight  Float
+  gender      String
+  dateOfBirth DateTime
+
+  // Detailed Health Data
+  healthData  Json     // Stores healthCritical, healthExtended, bloodPressure, heartRate, etc.
+  history     Json     // Stores medicationHistory, programHistory, etc.
+  preferences Json     // Stores primaryInterest, formFactor, personalizationGoals
+  
+  additionalInfo String?
+
+  createdAt   DateTime @default(now())
+}
+
+model Eligibility {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  status    String // "eligible" | "not_eligible" | "doctor_review"
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model Plan {
+  id             String  @id @default(cuid())
+  drugType       String // "semaglutide" | "liraglutide" | "tirzepatide"
+  tier           String // "affordable" | "standard" | "premium"
+  price          Float
+  durationMonths Int
+  stripePriceId  String?
+  orders         Order[]
+}
+
+model Order {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  planId               String
+  plan                 Plan     @relation(fields: [planId], references: [id])
+  status               String // "pending" | "paid" | "shipped" | "failed"
+  stripeSessionId      String?  @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime @default(now())
+}
+
+model TrustContent {
+  id          String   @id @default(cuid())
+  type        String // "testimonial" | "stat"
+  title       String
+  description String
+  metadata    Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  // ID of the user performing the action (if authenticated)
+  action      String   // e.g., "READ_INTAKE", "CREATE_INTAKE", "UPDATE_ELIGIBILITY"
+  resource    String   // e.g., "Intake", "Eligibility", "PendingIntake"
+  resourceId  String?  // ID of the affected resource (if applicable)
+  details     String?  // Additional context (e.g., IP address, or specific fields accessed - mask PHI here)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+}

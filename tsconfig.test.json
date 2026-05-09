@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": ".test-build",
+    "types": ["node"]
+  },
+  "include": [
+    "tests/**/*.ts",
+    "lib/eligibility.ts",
+    "lib/intake-state.ts",
+    "lib/personalization.ts",
+    "lib/plans.ts",
+    "lib/recommendations.ts",
+    "lib/trust-validation.ts"
+  ]
+}

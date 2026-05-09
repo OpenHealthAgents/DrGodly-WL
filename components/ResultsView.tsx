@@ -1,0 +1,323 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import { calculatePersonalization, PersonalizationResult } from "@/lib/personalization";
+import { RecommendationResult } from "@/lib/recommendations";
+import { CheckCircle2, TrendingDown, Calendar, Activity, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { TestimonialCard } from "@/components/trust/TestimonialCard";
+import { StatsBanner } from "@/components/trust/StatsBanner";
+import { FALLBACK_TRUST_CONTENT, TrustContent } from "@/lib/trust-data";
+
+export interface ResultsViewProps {
+  onCheckout: () => void;
+  initialResult?: {
+    data?: {
+      height?: number;
+      weight?: number;
+      goalWeight?: number;
+    };
+    recommendations?: RecommendationResult;
+  } | null;
+}
+
+export default function ResultsView({ onCheckout, initialResult }: ResultsViewProps) {
+  const initialPersonalization = useMemo(() => (
+    initialResult?.data?.height !== undefined &&
+    initialResult.data.weight !== undefined &&
+    initialResult.data.goalWeight !== undefined
+      ? calculatePersonalization(
+          initialResult.data.weight,
+          initialResult.data.goalWeight,
+          initialResult.data.height
+        )
+      : null
+  ), [initialResult]);
+  const [personalization, setPersonalization] = useState<PersonalizationResult | null>(initialPersonalization);
+  const [recommendations, setRecommendations] = useState<RecommendationResult | null>(
+    initialResult?.recommendations ?? null
+  );
+  const [trustContent, setTrustContent] = useState<TrustContent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const needsPersonalization = !initialPersonalization;
+        const needsRecommendations = !initialResult?.recommendations;
+        const [pRes, rRes, tRes] = await Promise.all([
+          needsPersonalization ? fetch("/api/personalization") : Promise.resolve(null),
+          needsRecommendations ? fetch("/api/recommendations") : Promise.resolve(null),
+          fetch("/api/trust"),
+        ]);
+        
+        if (pRes?.ok) {
+          const pData = await pRes.json();
+          setPersonalization(pData);
+        }
+
+        if (rRes?.ok) {
+          const rData = await rRes.json();
+          setRecommendations(rData);
+        }
+
+        if (tRes.ok) {
+          const tData = await tRes.json();
+          setTrustContent(tData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch results", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [initialPersonalization, initialResult?.recommendations]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent dark:border-zinc-100" />
+          <p className="text-sm font-medium text-zinc-500">Generating your personalized plan...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!personalization || !recommendations) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Could not load results. Please try completing the intake again.</p>
+      </div>
+    );
+  }
+
+  const { primary, secondary } = recommendations;
+  const activeStats = trustContent.filter(t => t.type === "stat");
+  const activeTestimonials = trustContent.filter(t => t.type === "testimonial");
+  const fallbackStats = FALLBACK_TRUST_CONTENT.filter(t => t.type === "stat");
+  const fallbackTestimonials = FALLBACK_TRUST_CONTENT.filter(t => t.type === "testimonial");
+  const stats = [
+    ...activeStats,
+    ...fallbackStats.filter(item => !activeStats.some(active => active.id === item.id)),
+  ].slice(0, 2);
+  const testimonials = [
+    ...activeTestimonials,
+    ...fallbackTestimonials.filter(item => !activeTestimonials.some(active => active.id === item.id)),
+  ].slice(0, 3);
+
+  return (
+    <div className="min-h-screen bg-zinc-50 py-12 px-6 dark:bg-black">
+      <div className="mx-auto max-w-4xl space-y-12">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-5xl"
+          >
+            Your Wellora Plan is Ready
+          </motion.h1>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400">
+            Based on your profile, we&apos;ve designed a treatment path tailored to your goals.
+          </p>
+        </div>
+
+        {/* Success Probability Banner */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-3xl bg-zinc-900 p-8 text-center text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xl"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-sm font-bold uppercase tracking-widest opacity-70">Chance of Success</span>
+            <div className="text-6xl font-black">{personalization.successProbability}%</div>
+            <div className="rounded-full bg-green-500/20 px-4 py-1 text-xs font-bold uppercase text-green-400">
+              Very High
+            </div>
+          </div>
+          <p className="mt-4 text-sm opacity-70">
+            Based on your profile and metabolic score of {personalization.metabolicScore}/100, you are a strong candidate for GLP-1 therapy.
+          </p>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid gap-6 sm:grid-cols-4">
+          <StatCard 
+            icon={<Activity className="h-5 w-5 text-blue-500" />} 
+            label="Current BMI" 
+            value={personalization.bmi.toString()} 
+          />
+          <StatCard 
+            icon={<TrendingDown className="h-5 w-5 text-green-500" />} 
+            label="Weekly Loss" 
+            value={`${personalization.weeklyWeightLossRange.min}-${personalization.weeklyWeightLossRange.max}kg`} 
+          />
+          <StatCard 
+            icon={<Calendar className="h-5 w-5 text-purple-500" />} 
+            label="Timeline" 
+            value={`${personalization.estimatedWeeksToGoal.min}-${personalization.estimatedWeeksToGoal.max} Weeks`} 
+          />
+          <StatCard 
+            icon={<ShieldCheck className="h-5 w-5 text-yellow-500" />} 
+            label="Goal Weight" 
+            value={`${initialResult?.data?.goalWeight || 75}kg`} 
+          />
+        </div>
+
+
+        {/* Recommendations */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Recommended Programs</h2>
+          
+          {/* Primary Recommendation */}
+          <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="absolute top-0 right-0 bg-zinc-900 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
+              Best Match
+            </div>
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold capitalize text-zinc-900 dark:text-zinc-100">
+                    {primary.drugType} ({primary.tier})
+                  </h3>
+                  <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+                    {primary.explanation}
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Medical provider consultation included
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Ongoing coaching & support
+                  </li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-3 sm:min-w-[200px]">
+                <button 
+                  onClick={onCheckout}
+                  className="w-full rounded-full bg-zinc-900 py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900"
+                >
+                  Continue to Checkout
+                </button>
+                <p className="text-center text-xs text-zinc-500">
+                  Secure checkout • Cancel anytime
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary Recommendation */}
+          {secondary && (
+            <div className="rounded-3xl border border-zinc-200 bg-zinc-50/50 p-8 dark:border-zinc-800 dark:bg-zinc-900/50">
+              <div className="flex flex-col gap-4">
+                <h3 className="text-xl font-bold capitalize text-zinc-900 dark:text-zinc-100">
+                  Alternative: {secondary.drugType}
+                </h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  {secondary.explanation}
+                </p>
+                <button className="text-sm font-semibold text-zinc-900 underline dark:text-zinc-100">
+                  View this plan instead
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* What is Included & What Happens Next */}
+        <div className="grid gap-8 sm:grid-cols-2">
+          <div className="rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900">
+            <h3 className="mb-6 text-xl font-bold">What is Included?</h3>
+            <ul className="space-y-4">
+              <StepItem icon="💊" title="Prescription GLP-1" desc="Cost of medication is fully included." />
+              <StepItem icon="👨‍⚕️" title="1:1 Physician Guidance" desc="Ongoing medical oversight." />
+              <StepItem icon="📦" title="Free Shipping" desc="Fast, discreet delivery to your door." />
+              <StepItem icon="🛡️" title="Weight Loss Guarantee" desc="Results or your money back." />
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-zinc-200 p-8 dark:border-zinc-800">
+            <h3 className="mb-6 text-xl font-bold">What Happens Next?</h3>
+            <ul className="space-y-6">
+              <NextStep number={1} title="Physician Review" desc="Most are approved in < 24 hours." />
+              <NextStep number={2} title="Medication Shipping" desc="Tracking info sent within 2 days." />
+              <NextStep number={3} title="Unlimited Support" desc="24/7 access to your care team." />
+            </ul>
+          </div>
+        </div>
+
+
+        {/* Trust Section */}
+        <div className="grid gap-12 pt-12 border-t border-zinc-200 dark:border-zinc-800 sm:grid-cols-2">
+          {/* Stats */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold uppercase tracking-widest text-zinc-500">Expected Weight Loss</h3>
+            <div className="grid gap-4">
+              {stats.map(stat => (
+                <StatsBanner key={stat.id} content={stat} />
+              ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-green-500" />
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">FDA-approved medications prescribed by licensed clinicians.</p>
+            </div>
+          </div>
+
+          {/* Testimonials */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold uppercase tracking-widest text-zinc-500">Real Stories</h3>
+            <div className="grid gap-6">
+              {testimonials.map(test => (
+                <TestimonialCard key={test.id} content={test} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-zinc-500">
+          {icon}
+          {label}
+        </div>
+        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function StepItem({ icon, title, desc }: { icon: string, title: string, desc: string }) {
+  return (
+    <li className="flex gap-4">
+      <span className="text-2xl">{icon}</span>
+      <div>
+        <p className="font-bold text-zinc-900 dark:text-zinc-100">{title}</p>
+        <p className="text-sm text-zinc-500">{desc}</p>
+      </div>
+    </li>
+  );
+}
+
+function NextStep({ number, title, desc }: { number: number, title: string, desc: string }) {
+  return (
+    <li className="flex gap-4">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+        {number}
+      </div>
+      <div>
+        <p className="font-bold text-zinc-900 dark:text-zinc-100">{title}</p>
+        <p className="text-sm text-zinc-500">{desc}</p>
+      </div>
+    </li>
+  );
+}
