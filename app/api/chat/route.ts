@@ -20,6 +20,9 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("POST /api/chat - API Key starts with:", process.env.OPENAI_API_KEY.substring(0, 7) + "...");
+
+
     const result = await streamText({
       model: openai("gpt-4o-mini"),
       system: AI_SYSTEM_PROMPT,

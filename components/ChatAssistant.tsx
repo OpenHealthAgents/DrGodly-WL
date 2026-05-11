@@ -13,7 +13,8 @@ export function ChatAssistant() {
   const { messages, sendMessage, status, error } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isLoading = status === "submitted" || status === "streaming";
+  // In this SDK version, 'ready' is the idle status
+  const isLoading = status !== "ready";
   const shouldHideAssistant = pathname === "/intake";
 
   useEffect(() => {
@@ -106,8 +107,12 @@ export function ChatAssistant() {
             )}
 
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-[10px] text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {error.message || "Failed to connect to AI. Please check your OPENAI_API_KEY."}
+              <div className="rounded-lg bg-red-50 p-4 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                <p className="font-bold mb-1">Communication Error:</p>
+                <p className="opacity-80">{error.message || "The AI is currently unavailable."}</p>
+                <p className="mt-2 text-[10px] opacity-50 italic text-zinc-500">
+                  Tip: Verify OPENAI_API_KEY in Vercel settings.
+                </p>
               </div>
             )}
           </div>
@@ -143,9 +148,6 @@ export function ChatAssistant() {
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
-            <p className="mt-2 text-[10px] text-center text-zinc-400">
-              Personalized health guidance.
-            </p>
           </form>
         </div>
       )}
