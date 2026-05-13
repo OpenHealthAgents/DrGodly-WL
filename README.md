@@ -1,4 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wellora
+
+Wellora is a full-stack health and wellness platform specializing in personalized weight loss programs using GLP-1 medications.
+
+GitHub: [https://github.com/OpenHealthAgents/Wellora](https://github.com/OpenHealthAgents/Wellora)
+
+## Overview
+
+This project is built with Next.js 15 (App Router), TypeScript, Tailwind CSS, Prisma (PostgreSQL), and Better Auth.
 
 ## Getting Started
 
