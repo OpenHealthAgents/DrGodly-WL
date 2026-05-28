@@ -5,6 +5,7 @@ import { IntakeStep } from "@/lib/intake-state";
 import { logAudit } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getDetectedRegion } from "@/lib/region-server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export async function GET() {
     
     const pending = await getPendingIntake(sessionId);
     console.log("GET /api/intake - Pending intake found:", !!pending);
+    const region = await getDetectedRegion();
     
     let session = null;
     try {
@@ -40,6 +42,7 @@ export async function GET() {
     return NextResponse.json({
       currentStep: pending?.currentStep || IntakeStep.HEIGHT,
       data: pending?.data || {},
+      region,
     });
 
   } catch (error) {
@@ -79,5 +82,4 @@ export async function DELETE() {
   
   return NextResponse.json({ message: "Intake reset" });
 }
-
 
