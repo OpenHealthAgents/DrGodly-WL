@@ -147,19 +147,20 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
     return `${weightContext} ${trustContext}${testimonialContext}`;
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent, answerOverride?: unknown) => {
     if (e) e.preventDefault();
-    if (!currentStep || inputValue === "" || isSubmitting || !region) return;
+    const answer = answerOverride ?? inputValue;
+    if (!currentStep || answer === "" || isSubmitting || !region) return;
 
     setIsSubmitting(true);
     const stepMeta = getStepMetadata(currentStep, region);
     
     // Add user message
-    let displayValue = inputValue;
+    let displayValue = answer;
     if (stepMeta.type === "options") {
-      displayValue = stepMeta.options?.find(o => o.value === inputValue)?.label || inputValue;
+      displayValue = stepMeta.options?.find(o => o.value === answer)?.label || answer;
     } else if (stepMeta.type === "checkbox") {
-      displayValue = Array.isArray(inputValue) ? inputValue.join(", ") : inputValue;
+      displayValue = Array.isArray(answer) ? answer.join(", ") : answer;
     }
 
     const userMsg: Message = {
@@ -173,7 +174,7 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
       const res = await fetch("/api/intake/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: currentStep, answer: inputValue }),
+        body: JSON.stringify({ step: currentStep, answer }),
       });
       const data = await res.json();
 
@@ -275,10 +276,11 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
           <div className="flex flex-wrap gap-2">
             {meta.options?.map((opt) => (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() => {
                   setInputValue(opt.value);
-                  setTimeout(() => handleSubmit(), 0);
+                  handleSubmit(undefined, opt.value);
                 }}
                 disabled={isSubmitting}
                 className="rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 dark:text-zinc-100"
@@ -296,6 +298,7 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
             <div className="flex flex-wrap gap-2">
               {meta.options?.map((opt) => (
                 <button
+                  type="button"
                   key={opt.value}
                   onClick={() => {
                     const newVals = currentVals.includes(opt.value)
@@ -315,6 +318,7 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
               ))}
             </div>
             <button
+              type="button"
               onClick={() => handleSubmit()}
               disabled={currentVals.length === 0 || isSubmitting}
               className="mt-2 w-full rounded-lg bg-zinc-900 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
