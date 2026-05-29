@@ -16,3 +16,16 @@ export const REGION_MAPPING: Record<string, Omit<RegionConfig, "country">> = {
   FR: { currency: "EUR", system: "metric", locale: "fr-FR" },
   DEFAULT: { currency: "USD", system: "metric", locale: "en-US" },
 };
+
+export const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+  US: "United States",
+  IN: "India",
+  GB: "United Kingdom",
+  CA: "Canada",
+  DE: "Germany",
+  FR: "France",
+};
+
+export function getCountryDisplayName(countryCode: string) {
+  return COUNTRY_DISPLAY_NAMES[countryCode] || countryCode;
+}

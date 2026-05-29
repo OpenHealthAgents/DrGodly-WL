@@ -15,7 +15,7 @@ import { LoginButton } from "@/components/LoginButton";
 import { TrustContent } from "@/lib/trust-data";
 
 import { useRouter } from "next/navigation";
-import { RegionConfig } from "@/lib/region-config";
+import { getCountryDisplayName, RegionConfig } from "@/lib/region-config";
 
 export default function ChatIntake() {
   const router = useRouter();
@@ -95,7 +95,7 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
       const welcomeMsg: Message = {
         id: "welcome",
         role: "assistant",
-        content: `Welcome to Wellora. We've detected you are in ${regionData.country}. This guided intake checks your initial eligibility for weight-loss treatment. Let's start with some basic information.`,
+        content: `Welcome to Wellora. We've detected you are in ${getCountryDisplayName(regionData.country)}. This guided intake checks your initial eligibility for weight-loss treatment. Let's start with some basic information.`,
       };
       
       const step = data.currentStep || IntakeStep.HEIGHT;
