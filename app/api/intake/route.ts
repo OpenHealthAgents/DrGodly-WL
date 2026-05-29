@@ -15,8 +15,15 @@ export async function GET() {
     const sessionId = await getIntakeSessionId();
     console.log("GET /api/intake - Session ID:", sessionId);
     
-    const pending = await getPendingIntake(sessionId);
+    let pending = await getPendingIntake(sessionId);
     console.log("GET /api/intake - Pending intake found:", !!pending);
+
+    if (pending?.currentStep === IntakeStep.COMPLETED) {
+      await deletePendingIntake(sessionId);
+      pending = null;
+      console.log("GET /api/intake - Cleared completed pending intake for new session");
+    }
+
     const region = await getDetectedRegion();
     
     let session = null;
@@ -82,4 +89,3 @@ export async function DELETE() {
   
   return NextResponse.json({ message: "Intake reset" });
 }
-
