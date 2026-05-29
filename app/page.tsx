@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WelloraLogo } from "@/components/WelloraLogo";
 import { AVAILABLE_PLANS } from "@/lib/plans";
 import { getStartingMonthlyPriceFromRows } from "@/lib/pricing";
 import prisma from "@/lib/prisma";
@@ -21,7 +22,7 @@ export default async function LandingPage() {
       {/* Navigation */}
       <header className="fixed top-0 z-50 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-md dark:border-zinc-900 dark:bg-black/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="text-xl font-black uppercase tracking-tighter">Wellora</div>
+          <WelloraLogo />
           <nav className="hidden items-center gap-8 text-sm font-medium sm:flex">
             <Link href="#how-it-works" className="hover:text-zinc-500">How it Works</Link>
             <Link href="#pricing" className="hover:text-zinc-500">Pricing</Link>

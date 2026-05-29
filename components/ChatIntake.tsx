@@ -8,6 +8,7 @@ import { Loader2, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WelloraLogo } from "@/components/WelloraLogo";
 
 import { LoginButton } from "@/components/LoginButton";
 
@@ -397,7 +398,7 @@ export function ChatIntakeComponent({ onComplete }: { onComplete: (result: unkno
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white dark:bg-black text-zinc-900 dark:text-zinc-100">
       <header className="flex min-h-16 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-900 sm:px-6">
-        <h1 className="shrink-0 text-xl font-bold tracking-tight">Wellora</h1>
+        <WelloraLogo />
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <ThemeToggle />
           <button 
