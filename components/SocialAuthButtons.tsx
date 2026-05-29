@@ -3,8 +3,10 @@
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
-export function SocialAuthButtons() {
+export function SocialAuthButtons({ callbackURL }: { callbackURL?: string }) {
+  const pathname = usePathname();
   const [loading, setLoading] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ export function SocialAuthButtons() {
       const result = await authClient.signIn.social(
         {
           provider,
-          callbackURL: "/dashboard",
+          callbackURL: callbackURL || pathname || "/dashboard",
         },
         {
           onError: (ctx) => {

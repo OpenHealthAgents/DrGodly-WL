@@ -33,7 +33,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-            <SocialAuthButtons />
+            <SocialAuthButtons callbackURL="/checkout" />
             <div className="mt-6">
               <p className="mb-4 text-center text-xs font-medium text-zinc-400 uppercase tracking-widest">
                 Quick Sign Up
@@ -68,4 +68,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
