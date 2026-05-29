@@ -14,6 +14,49 @@ interface DrugCsvRow {
   image: string;
 }
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  india: "IN",
+  in: "IN",
+  bharat: "IN",
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  us: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  gb: "GB",
+  germany: "DE",
+  de: "DE",
+  france: "FR",
+  fr: "FR",
+  canada: "CA",
+  ca: "CA",
+  australia: "AU",
+  au: "AU",
+};
+
+const CURRENCY_ALIASES: Record<string, string> = {
+  "₹": "INR",
+  rs: "INR",
+  inr: "INR",
+  rupee: "INR",
+  rupees: "INR",
+  "$": "USD",
+  usd: "USD",
+  dollar: "USD",
+  dollars: "USD",
+  "£": "GBP",
+  gbp: "GBP",
+  pound: "GBP",
+  pounds: "GBP",
+  "€": "EUR",
+  eur: "EUR",
+  euro: "EUR",
+  euros: "EUR",
+  cad: "CAD",
+  aud: "AUD",
+};
+
 function parseCsv(content: string) {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -95,6 +138,44 @@ function parsePrice(value: string) {
   return amount;
 }
 
+function normalizeCountry(value: string, price: string) {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized) {
+    const country = COUNTRY_ALIASES[normalized] || value.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country)) {
+      throw new Error(`Invalid country "${value}". Use ISO codes like IN, US, GB or known country names.`);
+    }
+    return country;
+  }
+
+  if (price.includes("₹")) return "IN";
+  if (price.includes("$")) return "US";
+  if (price.includes("£")) return "GB";
+  if (price.includes("€")) return "DE";
+
+  return "IN";
+}
+
+function normalizeCurrency(value: string, price: string) {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized) {
+    const currency = CURRENCY_ALIASES[normalized] || value.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new Error(`Invalid currency "${value}". Use ISO codes like INR, USD, GBP or known symbols.`);
+    }
+    return currency;
+  }
+
+  if (price.includes("₹")) return "INR";
+  if (price.includes("$")) return "USD";
+  if (price.includes("£")) return "GBP";
+  if (price.includes("€")) return "EUR";
+
+  return "INR";
+}
+
 function getTier(activeIngredient: string) {
   const lower = activeIngredient.toLowerCase();
 
@@ -130,8 +211,8 @@ function toRecords(rows: string[][]): DrugCsvRow[] {
       manufacturer: record.manufacturer,
       description: record.description,
       formFactor: record.formFactor,
-      country: record.country || "IN",
-      currency: record.currency || "INR",
+      country: normalizeCountry(record.country, record.price),
+      currency: normalizeCurrency(record.currency, record.price),
       price: record.price,
       image: record.image,
     };
@@ -173,7 +254,12 @@ async function main() {
   }
 
   if (dryRun) {
+    const countries = new Set(validRecords.map((record) => record.country));
+    const currencies = new Set(validRecords.map((record) => record.currency));
+
     console.log(`Validated ${validRecords.length} drug rows from ${filePath}.`);
+    console.log(`Countries: ${Array.from(countries).sort().join(", ")}`);
+    console.log(`Currencies: ${Array.from(currencies).sort().join(", ")}`);
     if (skipped > 0) {
       console.log(`Skipped ${skipped} incomplete rows.`);
     }
@@ -194,8 +280,8 @@ async function main() {
 
       const productId = `drug-${slugify(record.name)}`;
       const planId = `plan-${slugify(record.name)}`;
-      const country = record.country.toUpperCase();
-      const currency = record.currency.toUpperCase();
+      const country = record.country;
+      const currency = record.currency;
 
       await prisma.product.upsert({
         where: { id: productId },
