@@ -6,17 +6,55 @@ import { Loader2 } from "lucide-react";
 
 export function SocialAuthButtons() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+
+    if (error && typeof error === "object") {
+      const errorRecord = error as Record<string, unknown>;
+      const message = errorRecord.message;
+      const code = errorRecord.code;
+      const status = errorRecord.status;
+
+      return [message, code, status ? `HTTP ${status}` : null]
+        .filter(Boolean)
+        .join(" - ");
+    }
+
+    return "";
+  };
 
   const handleSignIn = async (provider: "google" | "apple") => {
     setLoading(provider);
+    setAuthError(null);
     try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL: "/dashboard",
-      });
+      const result = await authClient.signIn.social(
+        {
+          provider,
+          callbackURL: "/dashboard",
+        },
+        {
+          onError: (ctx) => {
+            const message = getErrorMessage(ctx.error) || `${provider} sign in failed.`;
+            console.error(`${provider} sign in failed:`, ctx.error);
+            setAuthError(message);
+            alert(message);
+          },
+        }
+      );
+
+      if (result.error) {
+        const message = getErrorMessage(result.error) || `${provider} sign in failed.`;
+        console.error(`${provider} sign in failed:`, result.error);
+        setAuthError(message);
+        alert(message);
+      }
     } catch (error) {
+      const message = getErrorMessage(error) || `${provider} sign in failed. Please try again.`;
       console.error(`${provider} sign in failed:`, error);
-      alert(`${provider} sign in failed. Please try again.`);
+      setAuthError(message);
+      alert(message);
     } finally {
       setLoading(null);
     }
@@ -77,6 +115,12 @@ export function SocialAuthButtons() {
           <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-950">Or continue with email</span>
         </div>
       </div>
+
+      {authError && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+          {authError}
+        </p>
+      )}
     </div>
   );
 }
