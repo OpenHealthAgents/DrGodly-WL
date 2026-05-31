@@ -51,7 +51,7 @@ export default async function LandingPage() {
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
             <p className="text-sm font-medium text-zinc-500">
-              Lowest medication option from <span className="text-zinc-900 dark:text-zinc-100">₹742/mo</span>
+              Lowest medication option from <span className="text-zinc-900 dark:text-zinc-100">₹3,956/mo</span>
             </p>
           </div>
           
