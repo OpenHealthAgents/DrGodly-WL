@@ -9,7 +9,6 @@ import { StatsBanner } from "@/components/trust/StatsBanner";
 import { TestimonialCard } from "@/components/trust/TestimonialCard";
 import { RegionConfig } from "@/lib/region-config";
 import { formatCurrency } from "@/lib/region-shared";
-import Image from "next/image";
 
 interface Product {
   id: string;
@@ -246,20 +245,7 @@ export default function CheckoutView() {
               {/* Product Preview Card */}
               {selectedProduct && (
                 <div className="flex items-center gap-6 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                  {selectedProduct.image ? (
-                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
-                      <Image 
-                        src={selectedProduct.image} 
-                        alt={selectedProduct.name} 
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
-                      <Box className="h-8 w-8 text-zinc-400" />
-                    </div>
-                  )}
+                  <ProductImage image={selectedProduct.image} name={selectedProduct.name} />
                   <div>
                     <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{selectedProduct.name}</h3>
                     <p className="text-sm text-zinc-500 line-clamp-2">{selectedProduct.description}</p>
@@ -281,7 +267,7 @@ export default function CheckoutView() {
                   
                   return (
                     <button
-                      key={plan.id}
+                      key={`${plan.durationMonths}-${plan.id}`}
                       onClick={() => setSelectedPlanId(plan.id)}
                       className={cn(
                         "relative flex flex-col gap-2 rounded-2xl border-2 p-6 text-left transition-all",
@@ -474,6 +460,37 @@ export default function CheckoutView() {
   );
 }
 
+function ProductImage({ image, name }: { image: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [image]);
+
+  if (!image || failed) {
+    return (
+      <div className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center rounded-xl bg-zinc-100 p-2 text-center dark:bg-zinc-800">
+        <Box className="mb-1 h-7 w-7 text-zinc-400" />
+        <span className="line-clamp-2 text-[10px] font-bold leading-tight text-zinc-500 dark:text-zinc-400">
+          {name}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100 p-2 dark:bg-zinc-800">
+      <img
+        src={image}
+        alt={name}
+        referrerPolicy="no-referrer"
+        className="h-full w-full object-contain"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 function matchesRecommendedProduct(product: Product, drugType: string) {
   const normalizedDrugType = drugType.toLowerCase();
 
@@ -501,15 +518,28 @@ function hasPrice(plan: Plan) {
 }
 
 function getCheckoutPlans(products: Product[], recommendedDrugType?: string) {
-  const recommendedPlans = recommendedDrugType
-    ? products
-        .flatMap((product) => product.plans)
-        .filter((plan) => matchesRecommendedPlan(plan, recommendedDrugType) && hasPrice(plan))
-    : [];
+  const recommendedProduct = recommendedDrugType
+    ? products.find((product) =>
+        matchesRecommendedProduct(product, recommendedDrugType) &&
+        product.plans.some(hasPrice)
+      )
+    : null;
 
-  if (recommendedPlans.length > 0) {
-    return recommendedPlans;
+  if (recommendedProduct) {
+    return uniquePlansByDuration(recommendedProduct.plans.filter(hasPrice));
   }
 
-  return products.flatMap((product) => product.plans).filter(hasPrice);
+  return uniquePlansByDuration(products.find((product) => product.plans.some(hasPrice))?.plans.filter(hasPrice) || []);
+}
+
+function uniquePlansByDuration(plans: Plan[]) {
+  const plansByDuration = new Map<number, Plan>();
+
+  for (const plan of plans) {
+    if (!plansByDuration.has(plan.durationMonths)) {
+      plansByDuration.set(plan.durationMonths, plan);
+    }
+  }
+
+  return Array.from(plansByDuration.values()).sort((a, b) => a.durationMonths - b.durationMonths);
 }

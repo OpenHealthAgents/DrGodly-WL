@@ -16,6 +16,7 @@
     "lint": "next lint",
     "test": "tsc -p tsconfig.test.json && node .test-build/tests/*.test.js",
     "import:drugs": "tsx prisma/import-drugs.ts",
+    "add:duration-plans": "tsx prisma/add-duration-plans.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
