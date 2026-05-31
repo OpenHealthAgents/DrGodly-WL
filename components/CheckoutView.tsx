@@ -83,6 +83,7 @@ export default function CheckoutView() {
   const [inventory, setInventory] = useState<Product[]>([]);
   const [trustContent, setTrustContent] = useState<TrustContent[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [address, setAddress] = useState({
     street: "",
     city: "",
@@ -95,6 +96,9 @@ export default function CheckoutView() {
   useEffect(() => {
     async function fetchData() {
       try {
+        const storedProductId = sessionStorage.getItem("wellora:selectedProductId") || "";
+        setSelectedProductId(storedProductId);
+
         const [recRes, trustRes, invRes] = await Promise.all([
           fetch("/api/recommendations"),
           fetch("/api/trust"),
@@ -123,7 +127,7 @@ export default function CheckoutView() {
           if (!detectedRegion) detectedRegion = invData.region;
 
           if (invData.products.length > 0) {
-            const availablePlans = getCheckoutPlans(invData.products, drugType || undefined);
+            const availablePlans = getCheckoutPlans(invData.products, drugType || undefined, storedProductId);
             if (availablePlans.length > 0) {
               setSelectedPlanId(availablePlans[0].id);
             }
@@ -215,11 +219,12 @@ export default function CheckoutView() {
   const recommendedDrugType = recommendations.primary.drugType;
   
   // Find the recommended product and its plans from inventory
-  const selectedProduct = inventory.find(p => matchesRecommendedProduct(p, recommendedDrugType)) || inventory.find((product) =>
+  const selectedProduct = inventory.find((product) => product.id === selectedProductId) ||
+    inventory.find(p => matchesRecommendedProduct(p, recommendedDrugType)) || inventory.find((product) =>
     product.plans.some((plan) => plan.id === selectedPlanId)
   );
   
-  const plans = getCheckoutPlans(inventory, recommendedDrugType);
+  const plans = getCheckoutPlans(inventory, recommendedDrugType, selectedProductId);
   const allPlans = inventory.flatMap(p => p.plans);
   const selectedPlan = allPlans.find(p => p.id === selectedPlanId);
 
@@ -540,7 +545,15 @@ function hasPrice(plan: Plan) {
   return Object.keys(plan.prices).length > 0;
 }
 
-function getCheckoutPlans(products: Product[], recommendedDrugType?: string) {
+function getCheckoutPlans(products: Product[], recommendedDrugType?: string, selectedProductId?: string) {
+  const selectedProduct = selectedProductId
+    ? products.find((product) => product.id === selectedProductId && product.plans.some(hasPrice))
+    : null;
+
+  if (selectedProduct) {
+    return uniquePlansByDuration(selectedProduct.plans.filter(hasPrice));
+  }
+
   const recommendedProduct = recommendedDrugType
     ? products.find((product) =>
         matchesRecommendedProduct(product, recommendedDrugType) &&

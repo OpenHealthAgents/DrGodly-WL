@@ -11,6 +11,27 @@ import { motion } from "framer-motion";
 import { TestimonialCard } from "@/components/trust/TestimonialCard";
 import { StatsBanner } from "@/components/trust/StatsBanner";
 import { FALLBACK_TRUST_CONTENT, TrustContent } from "@/lib/trust-data";
+import { formatCurrency } from "@/lib/region-shared";
+
+interface Product {
+  id: string;
+  name: string;
+  activeIngredient?: string | null;
+  manufacturer?: string | null;
+  description: string;
+  image: string | null;
+  formFactor: string;
+  plans: Plan[];
+}
+
+interface Plan {
+  id: string;
+  drugType: string;
+  tier: string;
+  prices: Record<string, number>;
+  priceCurrencies: Record<string, string>;
+  durationMonths: number;
+}
 
 export interface ResultsViewProps {
   onCheckout: () => void;
@@ -19,16 +40,18 @@ export interface ResultsViewProps {
 export default function ResultsView({ onCheckout }: ResultsViewProps) {
   const [personalization, setPersonalization] = useState<(PersonalizationResult & { region: RegionConfig }) | null>(null);
   const [recommendations, setRecommendations] = useState<(RecommendationResult & { region: RegionConfig }) | null>(null);
+  const [inventory, setInventory] = useState<Product[]>([]);
   const [trustContent, setTrustContent] = useState<TrustContent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [pRes, rRes, tRes] = await Promise.all([
+        const [pRes, rRes, tRes, iRes] = await Promise.all([
           fetch("/api/personalization"),
           fetch("/api/recommendations"),
           fetch("/api/trust"),
+          fetch("/api/inventory"),
         ]);
 
         
@@ -45,6 +68,11 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
         if (tRes.ok) {
           const tData = await tRes.json();
           setTrustContent(tData);
+        }
+
+        if (iRes.ok) {
+          const iData = await iRes.json();
+          setInventory(iData.products || []);
         }
       } catch (error) {
         console.error("Failed to fetch results", error);
@@ -76,6 +104,7 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
   }
 
   const { primary, secondary } = recommendations;
+  const comparableProducts = getComparableProducts(inventory, primary.drugType, secondary?.drugType);
   const activeStats = trustContent.filter(t => t.type === "stat");
   const activeTestimonials = trustContent.filter(t => t.type === "testimonial");
   const fallbackStats = FALLBACK_TRUST_CONTENT.filter(t => t.type === "stat");
@@ -152,6 +181,31 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
 
         </div>
 
+        {comparableProducts.length > 0 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Compare Available Options</h2>
+              <p className="mt-2 text-sm text-zinc-500">
+                These options match your recommended treatment category. Final selection is reviewed before fulfillment.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {comparableProducts.map((product, index) => (
+                <ProductOptionCard
+                  key={product.id}
+                  product={product}
+                  region={recommendations.region}
+                  isRecommended={index === 0}
+                  onSelect={() => {
+                    sessionStorage.setItem("wellora:selectedProductId", product.id);
+                    onCheckout();
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
 
         {/* Recommendations */}
         <div className="space-y-6">
@@ -185,7 +239,12 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
               </div>
               <div className="flex flex-col gap-3 sm:min-w-[200px]">
                 <button 
-                  onClick={onCheckout}
+                  onClick={() => {
+                    if (comparableProducts[0]) {
+                      sessionStorage.setItem("wellora:selectedProductId", comparableProducts[0].id);
+                    }
+                    onCheckout();
+                  }}
                   className="w-full rounded-full bg-zinc-900 py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900"
                 >
                   Continue to Checkout
@@ -266,6 +325,111 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
       </div>
     </div>
   );
+}
+
+function ProductOptionCard({
+  product,
+  region,
+  isRecommended,
+  onSelect,
+}: {
+  product: Product;
+  region: RegionConfig;
+  isRecommended: boolean;
+  onSelect: () => void;
+}) {
+  const bestPlan = getLowestMonthlyPlan(product, region.country);
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{product.name}</h3>
+            {isRecommended && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase text-green-700 dark:bg-green-900 dark:text-green-300">
+                Recommended
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-zinc-500">
+            {[product.activeIngredient, product.manufacturer].filter(Boolean).join(" • ")}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          {product.formFactor}
+        </span>
+      </div>
+      <p className="mt-4 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{product.description}</p>
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">From</p>
+          <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+            {bestPlan
+              ? `${formatCurrency(bestPlan.monthlyAmount, bestPlan.currency, region.locale)}/mo`
+              : "Price unavailable"}
+          </p>
+          {bestPlan && (
+            <p className="text-xs text-zinc-500">{bestPlan.durationMonths}-month plan</p>
+          )}
+        </div>
+        <button
+          onClick={onSelect}
+          className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          Select
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function getComparableProducts(products: Product[], primaryDrugType: string, secondaryDrugType?: string) {
+  const primaryMatches = products.filter((product) => productMatchesDrugType(product, primaryDrugType));
+  const secondaryMatches = secondaryDrugType
+    ? products.filter((product) => productMatchesDrugType(product, secondaryDrugType))
+    : [];
+  const seen = new Set<string>();
+
+  return [...primaryMatches, ...secondaryMatches]
+    .filter((product) => {
+      if (seen.has(product.id) || !product.plans.some(hasPrice)) return false;
+      seen.add(product.id);
+      return true;
+    })
+    .slice(0, 4);
+}
+
+function productMatchesDrugType(product: Product, drugType: string) {
+  const normalizedDrugType = drugType.toLowerCase();
+
+  return (
+    product.name.toLowerCase().includes(normalizedDrugType) ||
+    product.activeIngredient?.toLowerCase().includes(normalizedDrugType) ||
+    product.plans.some((plan) => plan.drugType.toLowerCase().includes(normalizedDrugType))
+  );
+}
+
+function hasPrice(plan: Plan) {
+  return Object.keys(plan.prices).length > 0;
+}
+
+function getLowestMonthlyPlan(product: Product, country: string) {
+  return product.plans
+    .map((plan) => {
+      const amount = plan.prices[country] ?? plan.prices.US ?? Object.values(plan.prices)[0];
+      const currency = plan.priceCurrencies[country] ?? plan.priceCurrencies.US ?? Object.values(plan.priceCurrencies)[0];
+
+      if (!amount || !currency) return null;
+
+      return {
+        durationMonths: plan.durationMonths,
+        monthlyAmount: Math.ceil(amount / plan.durationMonths),
+        currency,
+      };
+    })
+    .filter((plan): plan is { durationMonths: number; monthlyAmount: number; currency: string } => plan !== null)
+    .sort((a, b) => a.monthlyAmount - b.monthlyAmount)[0];
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
