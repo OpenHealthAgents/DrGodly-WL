@@ -462,12 +462,13 @@ export default function CheckoutView() {
 
 function ProductImage({ image, name }: { image: string | null; name: string }) {
   const [failed, setFailed] = useState(false);
+  const imageSrc = getProductImageSrc(image);
 
   useEffect(() => {
     setFailed(false);
   }, [image]);
 
-  if (!image || failed) {
+  if (!imageSrc || failed) {
     return (
       <div className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center rounded-xl bg-zinc-100 p-2 text-center dark:bg-zinc-800">
         <Box className="mb-1 h-7 w-7 text-zinc-400" />
@@ -481,7 +482,7 @@ function ProductImage({ image, name }: { image: string | null; name: string }) {
   return (
     <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100 p-2 dark:bg-zinc-800">
       <img
-        src={image}
+        src={imageSrc}
         alt={name}
         referrerPolicy="no-referrer"
         className="h-full w-full object-contain"
@@ -489,6 +490,17 @@ function ProductImage({ image, name }: { image: string | null; name: string }) {
       />
     </div>
   );
+}
+
+function getProductImageSrc(image: string | null) {
+  if (!image) return null;
+
+  const driveFileMatch = image.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveFileMatch?.[1]) {
+    return `https://drive.google.com/thumbnail?id=${driveFileMatch[1]}&sz=w400`;
+  }
+
+  return image;
 }
 
 function matchesRecommendedProduct(product: Product, drugType: string) {
