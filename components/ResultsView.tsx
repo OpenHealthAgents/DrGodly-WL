@@ -5,7 +5,7 @@ import { PersonalizationResult } from "@/lib/personalization";
 import { RegionConfig } from "@/lib/region-config";
 
 import { RecommendationResult } from "@/lib/recommendations";
-import { CheckCircle2, TrendingDown, Calendar, Activity, ShieldCheck } from "lucide-react";
+import { TrendingDown, Calendar, Activity, ShieldCheck } from "lucide-react";
 
 import { motion } from "framer-motion";
 import { TestimonialCard } from "@/components/trust/TestimonialCard";
@@ -195,14 +195,16 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
 
         </div>
 
-        {comparableProducts.length > 0 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Compare Available Options</h2>
-              <p className="mt-2 text-sm text-zinc-500">
-                These options match your recommended treatment category. Final selection is reviewed before fulfillment.
-              </p>
-            </div>
+        {/* Recommendations */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Recommended Options</h2>
+            <p className="mt-2 text-sm text-zinc-500">
+              Based on your intake, these options match your treatment category and form-factor preference. Lower-cost options are shown first.
+            </p>
+          </div>
+
+          {comparableProducts.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {comparableProducts.map((product, index) => (
                 <ProductOptionCard
@@ -217,21 +219,12 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
                 />
               ))}
             </div>
-          </div>
-        )}
-
-
-        {/* Recommendations */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Recommended Programs</h2>
-          
-          {/* Primary Recommendation */}
-          <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="absolute top-0 right-0 bg-zinc-900 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
-              Best Match
-            </div>
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-4">
+          ) : (
+            <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="absolute top-0 right-0 bg-zinc-900 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
+                Best Match
+              </div>
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="text-2xl font-bold capitalize text-zinc-900 dark:text-zinc-100">
                     {primary.drugType} ({primary.tier})
@@ -240,48 +233,11 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
                     {primary.explanation}
                   </p>
                 </div>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Medical provider consultation included
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Ongoing coaching & support
-                  </li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-3 sm:min-w-[200px]">
-                <button 
-                  onClick={() => {
-                    if (comparableProducts[0]) {
-                      sessionStorage.setItem("wellora:selectedProductId", comparableProducts[0].id);
-                    }
-                    onCheckout();
-                  }}
-                  className="w-full rounded-full bg-zinc-900 py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900"
+                <button
+                  onClick={onCheckout}
+                  className="rounded-full bg-zinc-900 px-6 py-3 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900"
                 >
                   Continue to Checkout
-                </button>
-                <p className="text-center text-xs text-zinc-500">
-                  Secure checkout • Cancel anytime
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary Recommendation */}
-          {secondary && (
-            <div className="rounded-3xl border border-zinc-200 bg-zinc-50/50 p-8 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <div className="flex flex-col gap-4">
-                <h3 className="text-xl font-bold capitalize text-zinc-900 dark:text-zinc-100">
-                  Alternative: {secondary.drugType}
-                </h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {secondary.explanation}
-                </p>
-                <button className="text-sm font-semibold text-zinc-900 underline dark:text-zinc-100">
-                  View this plan instead
                 </button>
               </div>
             </div>
@@ -352,7 +308,7 @@ function ProductOptionCard({
   isRecommended: boolean;
   onSelect: () => void;
 }) {
-  const bestPlan = getLowestMonthlyPlan(product, region.country);
+  const displayPlan = getDisplayPlan(product, region.country);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -379,12 +335,12 @@ function ProductOptionCard({
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">From</p>
           <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-            {bestPlan
-              ? `${formatCurrency(bestPlan.monthlyAmount, bestPlan.currency, region.locale)}/mo`
+            {displayPlan
+              ? `${formatCurrency(displayPlan.monthlyAmount, displayPlan.currency, region.locale)}/mo`
               : "Price unavailable"}
           </p>
-          {bestPlan && (
-            <p className="text-xs text-zinc-500">{bestPlan.durationMonths}-month plan</p>
+          {displayPlan && (
+            <p className="text-xs text-zinc-500">{displayPlan.durationMonths}-month plan</p>
           )}
         </div>
         <button
@@ -448,8 +404,8 @@ function hasPrice(plan: Plan) {
   return Object.keys(plan.prices).length > 0;
 }
 
-function getLowestMonthlyPlan(product: Product, country: string) {
-  return product.plans
+function getDisplayPlan(product: Product, country: string) {
+  const pricedPlans = product.plans
     .map((plan) => {
       const amount = plan.prices[country] ?? plan.prices.US ?? Object.values(plan.prices)[0];
       const currency = plan.priceCurrencies[country] ?? plan.priceCurrencies.US ?? Object.values(plan.priceCurrencies)[0];
@@ -462,12 +418,14 @@ function getLowestMonthlyPlan(product: Product, country: string) {
         currency,
       };
     })
-    .filter((plan): plan is { durationMonths: number; monthlyAmount: number; currency: string } => plan !== null)
-    .sort((a, b) => a.monthlyAmount - b.monthlyAmount)[0];
+    .filter((plan): plan is { durationMonths: number; monthlyAmount: number; currency: string } => plan !== null);
+
+  return pricedPlans.find((plan) => plan.durationMonths === 1) ||
+    pricedPlans.sort((a, b) => a.durationMonths - b.durationMonths)[0];
 }
 
 function getProductMonthlyPrice(product: Product, country: string) {
-  return getLowestMonthlyPlan(product, country)?.monthlyAmount ?? Number.POSITIVE_INFINITY;
+  return getDisplayPlan(product, country)?.monthlyAmount ?? Number.POSITIVE_INFINITY;
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
