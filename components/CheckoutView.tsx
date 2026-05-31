@@ -122,11 +122,10 @@ export default function CheckoutView() {
           
           if (!detectedRegion) detectedRegion = invData.region;
 
-          // Auto-select the first plan for the recommended treatment.
-          if (drugType && invData.products.length > 0) {
-            const product = invData.products.find((p: Product) => matchesRecommendedProduct(p, drugType!));
-            if (product && product.plans.length > 0) {
-              setSelectedPlanId(product.plans[0].id);
+          if (invData.products.length > 0) {
+            const availablePlans = getCheckoutPlans(invData.products, drugType || undefined);
+            if (availablePlans.length > 0) {
+              setSelectedPlanId(availablePlans[0].id);
             }
           }
         }
@@ -216,9 +215,11 @@ export default function CheckoutView() {
   const recommendedDrugType = recommendations.primary.drugType;
   
   // Find the recommended product and its plans from inventory
-  const selectedProduct = inventory.find(p => matchesRecommendedProduct(p, recommendedDrugType));
+  const selectedProduct = inventory.find(p => matchesRecommendedProduct(p, recommendedDrugType)) || inventory.find((product) =>
+    product.plans.some((plan) => plan.id === selectedPlanId)
+  );
   
-  const plans = selectedProduct?.plans || inventory.flatMap(p => p.plans).filter(p => matchesRecommendedPlan(p, recommendedDrugType));
+  const plans = getCheckoutPlans(inventory, recommendedDrugType);
   const allPlans = inventory.flatMap(p => p.plans);
   const selectedPlan = allPlans.find(p => p.id === selectedPlanId);
 
@@ -270,8 +271,9 @@ export default function CheckoutView() {
             {/* Step 1: Select Duration */}
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-6 text-xl font-bold text-zinc-900 dark:text-zinc-100">1. Select Program Duration</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {plans.map((plan) => {
+              {plans.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {plans.map((plan) => {
                   const totalPrice = getPriceValue(plan);
                   const perMonth = totalPrice ? Math.round(totalPrice / plan.durationMonths) : null;
                   
@@ -313,8 +315,13 @@ export default function CheckoutView() {
                       </div>
                     </button>
                   );
-                })}
-              </div>
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-500 dark:border-zinc-800">
+                  No active priced plans are available right now. Please contact support before continuing.
+                </div>
+              )}
 
             </div>
 
@@ -487,4 +494,22 @@ function getPlanPrice(plan: Plan, country: string) {
 
 function getPlanCurrency(plan: Plan, country: string, fallbackCurrency: string) {
   return plan.priceCurrencies[country] ?? plan.priceCurrencies.US ?? Object.values(plan.priceCurrencies)[0] ?? fallbackCurrency;
+}
+
+function hasPrice(plan: Plan) {
+  return Object.keys(plan.prices).length > 0;
+}
+
+function getCheckoutPlans(products: Product[], recommendedDrugType?: string) {
+  const recommendedPlans = recommendedDrugType
+    ? products
+        .flatMap((product) => product.plans)
+        .filter((plan) => matchesRecommendedPlan(plan, recommendedDrugType) && hasPrice(plan))
+    : [];
+
+  if (recommendedPlans.length > 0) {
+    return recommendedPlans;
+  }
+
+  return products.flatMap((product) => product.plans).filter(hasPrice);
 }
