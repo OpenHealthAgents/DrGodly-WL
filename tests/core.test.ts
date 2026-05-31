@@ -114,11 +114,11 @@ describe("recommendation engine", () => {
     assert.equal(result.secondary?.drugType, "semaglutide");
   });
 
-  it("recommends a tablet option when form factor preference is tablet", () => {
+  it("recommends semaglutide when form factor preference is tablet", () => {
     const result = getRecommendations({ primaryInterest: "affordability", formFactor: "tablet" });
 
-    assert.equal(result.primary.drugType, "liraglutide");
-    assert.equal(result.primary.tier, "standard");
+    assert.equal(result.primary.drugType, "semaglutide");
+    assert.equal(result.primary.tier, "affordable");
   });
 });
 

@@ -16,7 +16,7 @@ export interface RecommendationResult {
  * Medvi logic:
  * - Default -> semaglutide (affordable/most popular)
  * - If user prefers Potency -> tirzepatide (premium/most potent)
- * - If user prefers Tablets -> liraglutide (standard alternative/oral)
+ * - If user prefers Tablets -> semaglutide tablet-compatible options
  */
 export function getRecommendations(preferences: Partial<IntakeData>): RecommendationResult {
   const primaryInterest = preferences?.primaryInterest;
@@ -40,14 +40,14 @@ export function getRecommendations(preferences: Partial<IntakeData>): Recommenda
   if (formFactor === "tablet") {
     return {
       primary: {
-        drugType: "liraglutide",
-        tier: "standard",
-        explanation: "Since you prefer a non-injection option, we recommend our daily oral tablet formulation.",
-      },
-      secondary: {
         drugType: "semaglutide",
         tier: "affordable",
-        explanation: "While an injection, Semaglutide is the current gold standard for convenience (once-weekly).",
+        explanation: "Since you prefer a non-injection option, we recommend a tablet-compatible Semaglutide plan when available in your region.",
+      },
+      secondary: {
+        drugType: "tirzepatide",
+        tier: "premium",
+        explanation: "If you decide an injection is acceptable, Tirzepatide is the strongest option available.",
       },
     };
   }
