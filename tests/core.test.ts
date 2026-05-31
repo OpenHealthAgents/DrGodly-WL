@@ -76,6 +76,16 @@ describe("eligibility engine", () => {
 
     assert.equal(result.status, "not_eligible");
   });
+
+  it("marks personal or family history of MTC or MEN 2 as not eligible", () => {
+    const result = determineEligibility({
+      ...baseIntake,
+      healthCritical: ["mtc_men2_history"],
+    });
+
+    assert.equal(result.status, "not_eligible");
+    assert.match(result.reason ?? "", /Medullary Thyroid Carcinoma|MEN 2/);
+  });
 });
 
 describe("personalization engine", () => {

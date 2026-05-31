@@ -50,9 +50,10 @@ export function getStepMetadata(step: IntakeStep, region: RegionConfig): StepMet
       type: "date",
     },
     [IntakeStep.HEALTH_CRITICAL]: {
-      question: "Do any of these critical health conditions apply to you?",
+      question: "Important clinical note: GLP-1 medications carry a boxed warning for thyroid C-cell tumors and are not used for people with a personal or family history of Medullary Thyroid Carcinoma (MTC) or Multiple Endocrine Neoplasia syndrome type 2 (MEN 2). Do any of these critical health conditions apply to you?",
       type: "checkbox",
       options: [
+        { label: "Personal or family history of MTC or MEN 2", value: "mtc_men2_history" },
         { label: "End-stage kidney disease", value: "kidney_disease_end_stage" },
         { label: "End-stage liver disease", value: "liver_disease_end_stage" },
         { label: "Suicidal thoughts/prior attempt", value: "suicidal_thoughts" },
