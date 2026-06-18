@@ -12,6 +12,7 @@ import { TestimonialCard } from "@/components/trust/TestimonialCard";
 import { StatsBanner } from "@/components/trust/StatsBanner";
 import { FALLBACK_TRUST_CONTENT, TrustContent } from "@/lib/trust-data";
 import { formatCurrency } from "@/lib/region-shared";
+import { TIERED_PRICING_STRATEGY, formatTierMonthlyPrice, getPricingTierForProduct } from "@/lib/pricing-strategy";
 
 type RecommendationPayload = RecommendationResult & {
   region: RegionConfig;
@@ -55,6 +56,7 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
   useEffect(() => {
     async function fetchData() {
       try {
+        // Pull the four data sources needed to render a complete recommendation screen.
         const [pRes, rRes, tRes, iRes] = await Promise.all([
           fetch("/api/personalization"),
           fetch("/api/recommendations"),
@@ -131,6 +133,10 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
     ...activeTestimonials,
     ...fallbackTestimonials.filter(item => !activeTestimonials.some(active => active.id === item.id)),
   ].slice(0, 3);
+  const pricingTiers = TIERED_PRICING_STRATEGY.map((tier) => ({
+    ...tier,
+    priceLabel: formatTierMonthlyPrice(tier),
+  }));
 
   return (
     <div className="min-h-screen bg-zinc-50 py-12 px-6 dark:bg-black">
@@ -202,6 +208,24 @@ export default function ResultsView({ onCheckout }: ResultsViewProps) {
             <p className="mt-2 text-sm text-zinc-500">
               Based on your intake, these options match your treatment category and form-factor preference. Lower-cost options are shown first.
             </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {pricingTiers.map((tier) => (
+              // This is the simple tier comparison table shown before the product-specific cards.
+              <div key={tier.title} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{tier.title}</p>
+                <h3 className="mt-2 text-lg font-bold text-zinc-900 dark:text-zinc-100">{tier.medication}</h3>
+                <p className="mt-1 text-sm font-semibold text-zinc-600 dark:text-zinc-400">{tier.formFactor}</p>
+                <p className="mt-3 text-2xl font-black text-zinc-900 dark:text-zinc-100">{tier.priceLabel}</p>
+                <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{tier.audience}</p>
+                <ul className="mt-4 space-y-2 text-sm text-zinc-500">
+                  {tier.includes.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
           {comparableProducts.length > 0 ? (
@@ -325,6 +349,9 @@ function ProductOptionCard({
           <p className="text-sm text-zinc-500">
             {[product.activeIngredient, product.manufacturer].filter(Boolean).join(" • ")}
           </p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+            {getPricingTierForProduct(product).title}
+          </p>
         </div>
         <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
           {product.formFactor}
@@ -361,6 +388,7 @@ function getComparableProducts(
   preferredFormFactor?: "injection" | "tablet",
   secondaryDrugType?: string
 ) {
+  // Start with matching medication types, then keep the user's preferred form factor.
   const primaryMatches = products.filter((product) => productMatchesDrugType(product, primaryDrugType));
   const secondaryMatches = secondaryDrugType
     ? products.filter((product) => productMatchesDrugType(product, secondaryDrugType))
@@ -384,10 +412,18 @@ function productMatchesFormFactor(product: Product, preferredFormFactor?: "injec
   const formFactor = product.formFactor.toLowerCase();
 
   if (preferredFormFactor === "tablet") {
+    // Tablets should not surface injection-only products.
     return formFactor.includes("tablet") || formFactor.includes("capsule");
   }
 
-  return formFactor.includes("injection") || formFactor.includes("pen") || formFactor.includes("injectable");
+  // Injection preference includes pens and vial/syringe formats.
+  return (
+    formFactor.includes("injection") ||
+    formFactor.includes("injectable") ||
+    formFactor.includes("pen") ||
+    formFactor.includes("vial") ||
+    formFactor.includes("syringe")
+  );
 }
 
 function productMatchesDrugType(product: Product, drugType: string) {
@@ -405,6 +441,7 @@ function hasPrice(plan: Plan) {
 }
 
 function getDisplayPlan(product: Product, country: string) {
+  // Pick the cheapest monthly-equivalent plan so the card shows a "from" price.
   const pricedPlans = product.plans
     .map((plan) => {
       const amount = plan.prices[country] ?? plan.prices.US ?? Object.values(plan.prices)[0];

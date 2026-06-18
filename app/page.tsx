@@ -3,8 +3,14 @@ import Link from "next/link";
 import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DrGodlyLogo } from "@/components/DrGodlyLogo";
+import { getDetectedRegion } from "@/lib/region-server";
+import { getLowestEntryPriceLabel } from "@/lib/pricing-strategy";
 
 export default async function LandingPage() {
+  // Landing-page pricing is region-aware so the first number the user sees is not hardcoded.
+  const region = await getDetectedRegion();
+  const startingPrice = getLowestEntryPriceLabel(region.country, region.locale);
+
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-black dark:text-zinc-100">
       {/* Navigation */}
@@ -51,7 +57,7 @@ export default async function LandingPage() {
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
             <p className="text-sm font-medium text-zinc-500">
-              Lowest medication option from <span className="text-zinc-900 dark:text-zinc-100">₹3,956/mo</span>
+              <span className="text-zinc-900 dark:text-zinc-100">{startingPrice}</span>
             </p>
             <a
               href="tel:+919346317790"

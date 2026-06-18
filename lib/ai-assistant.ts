@@ -18,8 +18,9 @@ THE 5-STEP PROCESS:
 5. Unlimited Support: 24/7 access to our care team and doctors.
 
 PRICING & PLANS:
-- Semaglutide (Most Popular): Starts at $179/mo (with 12-month bundle). Month-to-month is $299.
-- Tirzepatide (Most Potent): Starts at $299/mo (with multi-month bundle). Month-to-month is $399.
+- Tier 1 Semaglutide Vial Program: starts at ₹1,999/mo and includes doctor consultation, 4 weeks of medication, and basic WhatsApp support.
+- Tier 2 Semaglutide Pen Program: starts at ₹3,999/mo for users who prefer a pre-filled or reusable pen format.
+- Tier 3 Tirzepatide Program: starts at ₹6,000+/mo for users who need the highest-efficacy option.
 - Weight Loss Guarantee: If you don't lose weight by the end of your program, you can request a full refund.
 
 STRICT RULES:
@@ -45,7 +46,7 @@ export const FAQS = [
   },
   {
     question: "How much does it cost?",
-    answer: "Plans start as low as $179/month for Semaglutide when you choose a multi-month package. Tirzepatide starts at $299/month."
+    answer: "The lowest monthly option starts at ₹1,999/mo for the semaglutide vial program. The semaglutide pen program starts at ₹3,999/mo and tirzepatide starts at ₹6,000+/mo."
   },
   {
     question: "Is this HSA/FSA approved?",

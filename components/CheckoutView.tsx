@@ -9,6 +9,7 @@ import { StatsBanner } from "@/components/trust/StatsBanner";
 import { TestimonialCard } from "@/components/trust/TestimonialCard";
 import { RegionConfig } from "@/lib/region-config";
 import { getConsultationFee, getOrderTotal, getShippingFee } from "@/lib/pricing";
+import { getPricingTierForProduct } from "@/lib/pricing-strategy";
 import { formatCurrency } from "@/lib/region-shared";
 
 interface Product {
@@ -96,6 +97,7 @@ export default function CheckoutView() {
   useEffect(() => {
     async function fetchData() {
       try {
+        // Session storage carries the product the user tapped from the results page.
         const storedProductId = sessionStorage.getItem("drgodly:selectedProductId") || "";
         setSelectedProductId(storedProductId);
 
@@ -127,7 +129,13 @@ export default function CheckoutView() {
           if (!detectedRegion) detectedRegion = invData.region;
 
           if (invData.products.length > 0) {
-            const availablePlans = getCheckoutPlans(invData.products, drugType || undefined, storedProductId);
+            // Preselect the cheapest plan for the detected region so checkout starts in a valid state.
+            const availablePlans = getCheckoutPlans(
+              invData.products,
+              detectedRegion?.country || invData.region?.country || "IN",
+              drugType || undefined,
+              storedProductId
+            );
             if (availablePlans.length > 0) {
               setSelectedPlanId(availablePlans[0].id);
             }
@@ -217,14 +225,11 @@ export default function CheckoutView() {
 
   const { region } = recommendations;
   const recommendedDrugType = recommendations.primary.drugType;
+  const selectedProduct = getBestMatchingProduct(inventory, region.country, recommendedDrugType, selectedProductId) ||
+    inventory.find((product) => product.plans.some((plan) => plan.id === selectedPlanId));
+  const selectedPricingTier = selectedProduct ? getPricingTierForProduct(selectedProduct) : null;
   
-  // Find the recommended product and its plans from inventory
-  const selectedProduct = inventory.find((product) => product.id === selectedProductId) ||
-    inventory.find(p => matchesRecommendedProduct(p, recommendedDrugType)) || inventory.find((product) =>
-    product.plans.some((plan) => plan.id === selectedPlanId)
-  );
-  
-  const plans = getCheckoutPlans(inventory, recommendedDrugType, selectedProductId);
+  const plans = getCheckoutPlans(inventory, region.country, recommendedDrugType, selectedProductId);
   const allPlans = inventory.flatMap(p => p.plans);
   const selectedPlan = allPlans.find(p => p.id === selectedPlanId);
 
@@ -261,6 +266,12 @@ export default function CheckoutView() {
                   <div>
                     <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{selectedProduct.name}</h3>
                     <p className="text-sm text-zinc-500 line-clamp-2">{selectedProduct.description}</p>
+                    {/* Tier text helps the user understand whether they are looking at the vial, pen, or tirzepatide path. */}
+                    {selectedPricingTier && (
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                        {selectedPricingTier.title}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -269,6 +280,10 @@ export default function CheckoutView() {
             {/* Step 1: Select Duration */}
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-6 text-xl font-bold text-zinc-900 dark:text-zinc-100">1. Select Program Duration</h2>
+              {/* Duration choices are sorted low-to-high so the UI naturally nudges toward the cheapest plan first. */}
+              <p className="mb-4 text-sm text-zinc-500">
+                Lower-cost semaglutide options are surfaced first, with the premium pen and tirzepatide tiers still available when they better fit the user&apos;s needs.
+              </p>
               {plans.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {plans.map((plan) => {
@@ -417,7 +432,10 @@ export default function CheckoutView() {
                 <h2 className="mb-4 text-lg font-bold">Order Summary</h2>
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500 capitalize">{recommendedDrugType} Program</span>
+                    {/* The summary label mirrors the selected tier when the product has a matching catalog entry. */}
+                    <span className="text-zinc-500 capitalize">
+                      {selectedPricingTier ? selectedPricingTier.title : `${recommendedDrugType} Program`}
+                    </span>
                     <span className="font-medium text-zinc-900 dark:text-zinc-100">
                       {selectedPlanAmount ? formatCurrency(selectedPlanAmount, selectedCurrency, region.locale) : "-"}
                     </span>
@@ -553,6 +571,36 @@ function matchesRecommendedProduct(product: Product, drugType: string) {
   );
 }
 
+function getBestMatchingProduct(
+  products: Product[],
+  country: string,
+  recommendedDrugType?: string,
+  selectedProductId?: string
+) {
+  // Preserve an explicit product choice if the user already selected one from results.
+  const selectedProduct = selectedProductId
+    ? products.find((product) => product.id === selectedProductId && product.plans.some(hasPrice))
+    : null;
+
+  if (selectedProduct) {
+    return selectedProduct;
+  }
+
+  const matchingProducts = recommendedDrugType
+    ? products.filter((product) =>
+        matchesRecommendedProduct(product, recommendedDrugType) &&
+        product.plans.some(hasPrice)
+      )
+    : [];
+
+  if (matchingProducts.length > 0) {
+    // Sort by monthly-equivalent price so the lowest-cost valid product appears first.
+    return matchingProducts.sort((a, b) => getProductMonthlyPrice(a, country) - getProductMonthlyPrice(b, country))[0];
+  }
+
+  return products.find((product) => product.plans.some(hasPrice)) || null;
+}
+
 function matchesRecommendedPlan(plan: Plan, drugType: string) {
   return plan.drugType.toLowerCase().includes(drugType.toLowerCase());
 }
@@ -569,20 +617,26 @@ function hasPrice(plan: Plan) {
   return Object.keys(plan.prices).length > 0;
 }
 
-function getCheckoutPlans(products: Product[], recommendedDrugType?: string, selectedProductId?: string) {
-  const selectedProduct = selectedProductId
-    ? products.find((product) => product.id === selectedProductId && product.plans.some(hasPrice))
-    : null;
+function getCheckoutPlans(
+  products: Product[],
+  country: string,
+  recommendedDrugType?: string,
+  selectedProductId?: string
+) {
+  // If the user explicitly selected a product, keep them on that product's plans.
+  const selectedProduct = getBestMatchingProduct(products, country, recommendedDrugType, selectedProductId);
 
   if (selectedProduct) {
     return uniquePlansByDuration(selectedProduct.plans.filter(hasPrice));
   }
 
   const recommendedProduct = recommendedDrugType
-    ? products.find((product) =>
-        matchesRecommendedProduct(product, recommendedDrugType) &&
-        product.plans.some(hasPrice)
-      )
+    ? products
+        .filter((product) =>
+          matchesRecommendedProduct(product, recommendedDrugType) &&
+          product.plans.some(hasPrice)
+        )
+        .sort((a, b) => getProductMonthlyPrice(a, country) - getProductMonthlyPrice(b, country))[0]
     : null;
 
   if (recommendedProduct) {
@@ -590,6 +644,19 @@ function getCheckoutPlans(products: Product[], recommendedDrugType?: string, sel
   }
 
   return uniquePlansByDuration(products.find((product) => product.plans.some(hasPrice))?.plans.filter(hasPrice) || []);
+}
+
+function getProductMonthlyPrice(product: Product, country: string) {
+  // The comparison uses the cheapest monthly equivalent for the region, not the raw catalog amount.
+  const monthlyAmounts = product.plans
+    .filter(hasPrice)
+    .map((plan) => {
+      const amount = getPlanPrice(plan, country);
+      return amount ? amount / Math.max(plan.durationMonths, 1) : Number.POSITIVE_INFINITY;
+    })
+    .sort((a, b) => a - b);
+
+  return monthlyAmounts[0] ?? Number.POSITIVE_INFINITY;
 }
 
 function uniquePlansByDuration(plans: Plan[]) {

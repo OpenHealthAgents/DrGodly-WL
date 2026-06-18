@@ -119,9 +119,12 @@ function slugify(value: string) {
 function normalizeFormFactor(value: string) {
   const lower = value.toLowerCase();
 
+  // Normalize free-form CSV labels into the small set the app understands.
   if (lower.includes("tablet")) return "tablet";
   if (lower.includes("capsule")) return "capsule";
   if (lower.includes("pen")) return "pre-filled-pen";
+  if (lower.includes("vial")) return "vial";
+  if (lower.includes("syringe")) return "syringe";
   if (lower.includes("injection")) return "injection";
 
   return value.trim() || "other";
@@ -142,6 +145,7 @@ function normalizeCountry(value: string, price: string) {
   const normalized = value.trim().toLowerCase();
 
   if (normalized) {
+    // Accept either "India" or "IN"; the database stores the ISO-3166 country code.
     const country = COUNTRY_ALIASES[normalized] || value.trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(country)) {
       throw new Error(`Invalid country "${value}". Use ISO codes like IN, US, GB or known country names.`);
@@ -161,6 +165,7 @@ function normalizeCurrency(value: string, price: string) {
   const normalized = value.trim().toLowerCase();
 
   if (normalized) {
+    // Keep currency as ISO-4217 so downstream formatting stays consistent.
     const currency = CURRENCY_ALIASES[normalized] || value.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency)) {
       throw new Error(`Invalid currency "${value}". Use ISO codes like INR, USD, GBP or known symbols.`);
@@ -176,10 +181,13 @@ function normalizeCurrency(value: string, price: string) {
   return "INR";
 }
 
-function getTier(activeIngredient: string) {
+function getTier(activeIngredient: string, formFactor: string) {
   const lower = activeIngredient.toLowerCase();
+  const normalizedFormFactor = formFactor.toLowerCase();
 
+  // The import script infers the tier from the medication family and dosage presentation.
   if (lower.includes("tirzepatide")) return "premium";
+  if (lower.includes("semaglutide") && normalizedFormFactor.includes("pen")) return "standard";
   if (lower.includes("semaglutide")) return "affordable";
 
   return "standard";
@@ -274,10 +282,12 @@ async function main() {
   try {
     for (const record of records) {
       if (!record.name || !record.activeIngredient || !record.price) {
+        // Skip incomplete rows instead of failing the entire import batch.
         console.warn(`Skipping incomplete drug row: ${record.name || "(missing name)"}`);
         continue;
       }
 
+      // Product rows model the catalog item itself; plan rows model the purchasable treatment bundle.
       const productId = `drug-${slugify(record.name)}`;
       const planId = `plan-${slugify(record.name)}`;
       const country = record.country;
@@ -311,7 +321,7 @@ async function main() {
         update: {
           productId,
           drugType: toDrugType(record.activeIngredient),
-          tier: getTier(record.activeIngredient),
+          tier: getTier(record.activeIngredient, record.formFactor),
           durationMonths: 1,
           isActive: true,
         },
@@ -319,7 +329,7 @@ async function main() {
           id: planId,
           productId,
           drugType: toDrugType(record.activeIngredient),
-          tier: getTier(record.activeIngredient),
+          tier: getTier(record.activeIngredient, record.formFactor),
           durationMonths: 1,
           isActive: true,
         },

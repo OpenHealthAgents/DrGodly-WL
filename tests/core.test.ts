@@ -13,6 +13,7 @@ import {
   getPlanPriceForRegion,
   getShippingFee,
 } from "../lib/pricing";
+import { getPricingTierForProduct, getLowestEntryPriceLabel } from "../lib/pricing-strategy";
 import { getRecommendations } from "../lib/recommendations";
 import { TrustContentSchema } from "../lib/trust-validation";
 
@@ -270,11 +271,28 @@ describe("plans and trust layer", () => {
     const prices = [{ country: "IN", currency: "INR", amount: 742 }];
 
     assert.equal(getDoseMultiplierForFormFactor("pre-filled-pen"), 4);
+    assert.equal(getDoseMultiplierForFormFactor("vial"), 4);
     assert.equal(getDoseMultiplierForFormFactor("tablet"), 1);
     assert.deepEqual(getBillablePlanPriceForRegion(prices, { country: "IN" }, "injection"), {
       country: "IN",
       currency: "INR",
       amount: 2968,
     });
+  });
+
+  it("maps product formats to the three-tier pricing strategy", () => {
+    assert.equal(
+      getPricingTierForProduct({ drugType: "semaglutide", formFactor: "vial" }).band,
+      "affordable"
+    );
+    assert.equal(
+      getPricingTierForProduct({ drugType: "semaglutide", formFactor: "pre-filled-pen" }).band,
+      "standard"
+    );
+    assert.equal(
+      getPricingTierForProduct({ drugType: "tirzepatide", formFactor: "injection" }).band,
+      "premium"
+    );
+    assert.match(getLowestEntryPriceLabel("IN"), /₹1,999/);
   });
 });

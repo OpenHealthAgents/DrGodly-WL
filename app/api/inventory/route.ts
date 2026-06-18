@@ -9,6 +9,7 @@ export async function GET() {
   try {
     const region = await getDetectedRegion();
     
+    // Load active products and their active plans; inactive catalog items stay hidden from the UI.
     const products = await prisma.product.findMany({
       where: { isActive: true },
       include: {
@@ -25,6 +26,7 @@ export async function GET() {
 
     return NextResponse.json({
       products: products.map((product) => {
+        // Convert stored single-dose plan rows into the billable monthly amounts expected by the UI.
         const doseAdjustedPlans = product.plans.map((plan) => {
           const billablePrices = getBillablePlanPrices(plan.prices, product.formFactor);
 

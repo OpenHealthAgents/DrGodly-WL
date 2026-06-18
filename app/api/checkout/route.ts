@@ -14,6 +14,7 @@ const RAZORPAY_SUPPORTED_CURRENCIES = new Set(["INR"]);
 
 export async function POST(req: Request) {
   try {
+    // The checkout endpoint is intentionally server-side only because it depends on auth and Razorpay secrets.
     const authSession = await auth.api.getSession({
       headers: await headers(),
     });
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
+    // Compute the region-aware, dose-adjusted medication charge before adding service fees.
     const price = getBillablePlanPriceForRegion(plan.prices, region, plan.product.formFactor);
     const doseMultiplier = getDoseMultiplierForFormFactor(plan.product.formFactor);
 
@@ -60,6 +62,7 @@ export async function POST(req: Request) {
 
     const consultationFee = getConsultationFee(price.currency);
     const shippingFee = getShippingFee(price.currency);
+    // Razorpay expects the final order total, not just the medication subtotal.
     const totalPrice = getOrderTotal(price.amount, price.currency);
     const amount = toRazorpayAmount(totalPrice);
 
