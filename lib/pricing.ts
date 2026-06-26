@@ -93,7 +93,7 @@ export function getStartingMonthlyPriceFromRows<
 
 export function getConsultationFee(currency: string) {
   // Consultation and shipping are only charged in INR right now.
-  return currency === "INR" ? 300 : 0;
+  return currency === "INR" ? 49 : 0;
 }
 
 export function getShippingFee(currency: string) {
