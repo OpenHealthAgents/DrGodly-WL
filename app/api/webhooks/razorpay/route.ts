@@ -22,19 +22,21 @@ export async function POST(req: Request) {
     const event = JSON.parse(body);
     const payment = event.payload?.payment?.entity;
     const orderId = payment?.order_id;
+    const paymentId = payment?.id;
 
-    if (event.event === "payment.captured" && orderId) {
-      await prisma.order.update({
+    // Treat successful capture/authorization as the source of truth for paid orders.
+    if ((event.event === "payment.captured" || event.event === "payment.authorized" || event.event === "order.paid") && orderId) {
+      await prisma.order.updateMany({
         where: { razorpayOrderId: orderId },
         data: {
           status: "paid",
-          razorpayPaymentId: payment.id,
+          ...(paymentId ? { razorpayPaymentId: paymentId } : {}),
         },
       });
     }
 
     if (event.event === "payment.failed" && orderId) {
-      await prisma.order.update({
+      await prisma.order.updateMany({
         where: { razorpayOrderId: orderId },
         data: { status: "failed" },
       });

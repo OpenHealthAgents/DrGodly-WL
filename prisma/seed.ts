@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { randomUUID } from "node:crypto";
 import "dotenv/config";
+import { hashPassword } from "better-auth/crypto";
 
 const connectionString = `${process.env.DATABASE_URL}`;
 const pool = new pg.Pool({ 
@@ -10,6 +12,9 @@ const pool = new pg.Pool({
 });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+
+const TEST_ACCOUNT_EMAIL = process.env.TEST_ACCOUNT_EMAIL || "test@drgodly.com";
+const TEST_ACCOUNT_PASSWORD = process.env.TEST_ACCOUNT_PASSWORD || "DrGodly123!";
 
 async function main() {
   console.log("Seeding inventory system...");
@@ -218,6 +223,53 @@ async function main() {
       create: item as any,
     });
   }
+
+  console.log("Seeding test auth account...");
+  const testUser = await prisma.user.upsert({
+    where: { email: TEST_ACCOUNT_EMAIL },
+    update: {
+      name: "Test User",
+    },
+    create: {
+      email: TEST_ACCOUNT_EMAIL,
+      name: "Test User",
+    },
+  });
+
+  const passwordHash = await hashPassword(TEST_ACCOUNT_PASSWORD);
+  const existingAccount = await prisma.account.findFirst({
+    where: {
+      userId: testUser.id,
+      providerId: "credential",
+    },
+  });
+
+  if (existingAccount) {
+    await prisma.account.update({
+      where: { id: existingAccount.id },
+      data: {
+        accountId: testUser.id,
+        providerId: "credential",
+        userId: testUser.id,
+        password: passwordHash,
+        updatedAt: new Date(),
+      },
+    });
+  } else {
+    await prisma.account.create({
+      data: {
+        id: randomUUID(),
+        accountId: testUser.id,
+        providerId: "credential",
+        userId: testUser.id,
+        password: passwordHash,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  console.log(`Test account ready: ${TEST_ACCOUNT_EMAIL} / ${TEST_ACCOUNT_PASSWORD}`);
 
   console.log("Inventory seeding completed successfully.");
 }

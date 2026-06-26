@@ -4,7 +4,14 @@ import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { createRazorpayOrder, getRazorpayKeyId, isRazorpayConfigured, toRazorpayAmount } from "@/lib/razorpay";
 import { getDetectedRegion } from "@/lib/region-server";
-import { getBillablePlanPriceForRegion, getConsultationFee, getDoseMultiplierForFormFactor, getOrderTotal, getShippingFee } from "@/lib/pricing";
+import {
+  getBillablePlanPrices,
+  getBillablePlanPriceForRegion,
+  getConsultationFee,
+  getDoseMultiplierForFormFactor,
+  getOrderTotal,
+  getShippingFee,
+} from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -51,8 +58,21 @@ export async function POST(req: Request) {
     }
 
     // Compute the region-aware, dose-adjusted medication charge before adding service fees.
-    const price = getBillablePlanPriceForRegion(plan.prices, region, plan.product.formFactor);
+    // Razorpay only accepts INR, so if geolocation lands on a non-INR row but an INR row exists,
+    // prefer that instead of failing the checkout flow.
+    const billablePrices = getBillablePlanPrices(plan.prices, plan.product.formFactor);
+    const regionPrice = getBillablePlanPriceForRegion(plan.prices, region, plan.product.formFactor);
+    const price =
+      regionPrice.currency === "INR"
+        ? regionPrice
+        : billablePrices.find((item) => item.currency === "INR" || item.country === "IN");
     const doseMultiplier = getDoseMultiplierForFormFactor(plan.product.formFactor);
+
+    if (!price) {
+      return NextResponse.json({
+        error: `No INR pricing is available for ${plan.id}. Razorpay checkout requires an INR plan row.`,
+      }, { status: 400 });
+    }
 
     if (!RAZORPAY_SUPPORTED_CURRENCIES.has(price.currency)) {
       return NextResponse.json({

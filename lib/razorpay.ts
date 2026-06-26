@@ -16,8 +16,8 @@ export interface RazorpayOrderInput {
 }
 
 function getRazorpayCredentials() {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keyId = normalizeSecret(process.env.RAZORPAY_KEY_ID);
+  const keySecret = normalizeSecret(process.env.RAZORPAY_KEY_SECRET);
 
   if (!keyId || !keySecret) {
     throw new Error("Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
@@ -90,7 +90,7 @@ export function verifyRazorpayPaymentSignature({
 }
 
 export function verifyRazorpayWebhookSignature(body: string, signature: string) {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const webhookSecret = normalizeSecret(process.env.RAZORPAY_WEBHOOK_SECRET);
 
   if (!webhookSecret) {
     throw new Error("Razorpay webhook secret is not configured.");
@@ -109,4 +109,18 @@ export function verifyRazorpayWebhookSignature(body: string, signature: string) 
     Buffer.from(expectedSignature),
     Buffer.from(signature)
   );
+}
+
+function normalizeSecret(value: string | undefined) {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
 }

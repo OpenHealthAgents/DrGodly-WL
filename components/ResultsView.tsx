@@ -92,6 +92,7 @@ export default function ResultsView({ onPlanSelect }: ResultsViewProps) {
     ...fallbackTestimonials.filter((item) => !activeTestimonials.some((active) => active.id === item.id)),
   ].slice(0, 3);
   const primaryPlan = TIERED_PRICING_STRATEGY.find((tier) => tier.band === recommendations.primary.tier) || TIERED_PRICING_STRATEGY[0];
+  const showPlanChooser = recommendations.preferences?.formFactor !== "tablet";
 
   return (
     <div className="min-h-screen bg-zinc-50 px-6 py-12 dark:bg-black">
@@ -105,7 +106,7 @@ export default function ResultsView({ onPlanSelect }: ResultsViewProps) {
             Your DrGodly Plan is Ready
           </motion.h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400">
-            We&apos;ve matched you to a treatment path. Choose a plan below to move to your doctor appointment page.
+            We&apos;ve matched you to a treatment path. Injection users can compare plans below, while tablet users continue straight to the doctor appointment step.
           </p>
         </div>
 
@@ -149,50 +150,66 @@ export default function ResultsView({ onPlanSelect }: ResultsViewProps) {
           />
         </div>
 
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Choose a Plan</h2>
-            <p className="mt-2 text-sm text-zinc-500">
-              Pick the plan that fits your budget and treatment preference. You&apos;ll go to the doctor appointment screen next.
-            </p>
-          </div>
+        {showPlanChooser ? (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Choose a Plan</h2>
+              <p className="mt-2 text-sm text-zinc-500">
+                Pick the plan that fits your budget and treatment preference. You&apos;ll go to the doctor appointment screen next.
+              </p>
+            </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {TIERED_PRICING_STRATEGY.map((tier) => (
-              <button
-                key={tier.title}
-                type="button"
-                onClick={() => {
-                  sessionStorage.setItem("drgodly:selectedPlanTier", tier.band);
-                  sessionStorage.setItem("drgodly:selectedPlanTitle", tier.title);
-                  onPlanSelect(tier);
-                }}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition-transform hover:scale-[1.01] active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{tier.title}</p>
-                <h3 className="mt-2 text-lg font-bold text-zinc-900 dark:text-zinc-100">{tier.medication}</h3>
-                <p className="mt-1 text-sm font-semibold text-zinc-600 dark:text-zinc-400">{tier.formFactor}</p>
-                <p className="mt-3 text-2xl font-black text-zinc-900 dark:text-zinc-100">{formatTierMonthlyPrice(tier)}</p>
-                <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{tier.audience}</p>
-                <ul className="mt-4 space-y-2 text-sm text-zinc-500">
-                  {tier.includes.map((item) => (
-                    <li key={item}>• {item}</li>
-                  ))}
-                </ul>
-                <div className="mt-5 inline-flex rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
-                  Select Plan
-                </div>
-              </button>
-            ))}
-          </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {TIERED_PRICING_STRATEGY.map((tier) => (
+                <button
+                  key={tier.title}
+                  type="button"
+                  onClick={() => {
+                    sessionStorage.setItem("drgodly:selectedPlanTier", tier.band);
+                    sessionStorage.setItem("drgodly:selectedPlanTitle", tier.title);
+                    onPlanSelect(tier);
+                  }}
+                  className="rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition-transform hover:scale-[1.01] active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{tier.title}</p>
+                  <h3 className="mt-2 text-lg font-bold text-zinc-900 dark:text-zinc-100">{tier.medication}</h3>
+                  <p className="mt-1 text-sm font-semibold text-zinc-600 dark:text-zinc-400">{tier.formFactor}</p>
+                  <p className="mt-3 text-2xl font-black text-zinc-900 dark:text-zinc-100">{formatTierMonthlyPrice(tier)}</p>
+                  <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{tier.audience}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-zinc-500">
+                    {tier.includes.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-5 inline-flex rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+                    Select Plan
+                  </div>
+                </button>
+              ))}
+            </div>
 
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Recommended Starting Point</h3>
+              <p className="mt-2 text-sm text-zinc-500">
+                {primaryPlan.title} is the suggested default for your intake. If you need a different experience level, choose another plan above.
+              </p>
+            </div>
+          </div>
+        ) : (
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Recommended Starting Point</h3>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Tablet Path Selected</h3>
             <p className="mt-2 text-sm text-zinc-500">
-              {primaryPlan.title} is the suggested default for your intake. If you need a different experience level, choose another plan above.
+              Since you selected tablets, there are no injection plan tiers to compare here. Continue to the doctor appointment screen to review your recommended path.
             </p>
+            <button
+              type="button"
+              onClick={() => onPlanSelect(primaryPlan)}
+              className="mt-5 inline-flex rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              Continue to Appointment
+            </button>
           </div>
-        </div>
+        )}
 
         <div className="grid gap-8 sm:grid-cols-2">
           <div className="rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900">
@@ -207,9 +224,18 @@ export default function ResultsView({ onPlanSelect }: ResultsViewProps) {
           <div className="rounded-3xl border border-zinc-200 p-8 dark:border-zinc-800">
             <h3 className="mb-6 text-xl font-bold">What Happens Next?</h3>
             <ul className="space-y-6">
-              <NextStep number={1} title="Choose a Plan" desc="Pick the tier that fits your budget and treatment preference." />
-              <NextStep number={2} title="Set Appointment" desc="Choose a doctor consultation slot that works for you." />
-              <NextStep number={3} title="Continue to Checkout" desc="Finish the order once your appointment is set." />
+              {showPlanChooser ? (
+                <>
+                  <NextStep number={1} title="Choose a Plan" desc="Pick the tier that fits your budget and treatment preference." />
+                  <NextStep number={2} title="Set Appointment" desc="Choose a doctor consultation slot that works for you." />
+                  <NextStep number={3} title="Continue to Checkout" desc="Finish the order once your appointment is set." />
+                </>
+              ) : (
+                <>
+                  <NextStep number={1} title="Set Appointment" desc="Choose a doctor consultation slot that works for you." />
+                  <NextStep number={2} title="Continue to Checkout" desc="Finish the order once your appointment is set." />
+                </>
+              )}
             </ul>
           </div>
         </div>
