@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { calculateBMI, determineEligibility } from "../lib/eligibility";
+import { calculateBmi, categorizeBmi } from "../lib/bmi";
 import { getNextStep, IntakeStep, StepValidators } from "../lib/intake-state";
 import { calculatePersonalization } from "../lib/personalization";
 import { AVAILABLE_PLANS } from "../lib/plans";
@@ -125,6 +126,23 @@ describe("eligibility engine", () => {
 
     assert.equal(result.status, "not_eligible");
     assert.match(result.reason ?? "", /Medullary Thyroid Carcinoma|MEN 2/);
+  });
+});
+
+describe("BMI calculator", () => {
+  it("calculates metric BMI", () => {
+    assert.equal(Number(calculateBmi({ height: 170, weight: 80, unit: "metric" }).toFixed(1)), 27.7);
+  });
+
+  it("calculates imperial BMI", () => {
+    assert.equal(Number(calculateBmi({ height: 70, weight: 176, unit: "imperial" }).toFixed(1)), 25.3);
+  });
+
+  it("categorizes BMI bands", () => {
+    assert.equal(categorizeBmi(18.4), "underweight");
+    assert.equal(categorizeBmi(22), "healthy");
+    assert.equal(categorizeBmi(27), "overweight");
+    assert.equal(categorizeBmi(31), "obese");
   });
 });
 

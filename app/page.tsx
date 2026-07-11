@@ -57,6 +57,12 @@ export default async function LandingPage() {
               Am I Qualified?
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
+            <Link
+              href="/bmi-calculator"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-6 py-3 text-sm font-bold text-zinc-900 transition-transform hover:scale-[1.02] active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+            >
+              BMI Calculator
+            </Link>
             <p className="text-sm font-medium text-zinc-500">
               <span className="text-zinc-900 dark:text-zinc-100">{startingPrice}</span>
             </p>
