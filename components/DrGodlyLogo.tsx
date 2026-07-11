@@ -7,17 +7,17 @@ export function DrGodlyLogo({ href = "/" }: { href?: string }) {
         DG
       </span>
       <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-zinc-50">
-        Dr.Godly
+        DrGodly
       </span>
     </span>
   );
 
   if (!href) {
-    return <div aria-label="Dr.Godly">{content}</div>;
+    return <div aria-label="DrGodly">{content}</div>;
   }
 
   return (
-    <Link href={href} aria-label="Dr.Godly home" className="shrink-0">
+    <Link href={href} aria-label="DrGodly home" className="shrink-0">
       {content}
     </Link>
   );
