@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone } from "lucide-react";
+import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone, Linkedin } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DrGodlyLogo } from "@/components/DrGodlyLogo";
 import { getDetectedRegion } from "@/lib/region-server";
@@ -71,7 +71,7 @@ export default async function LandingPage() {
               className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-300"
             >
               <Phone className="h-4 w-4" />
-              Prefer to talk? Call 9346317790
+              Prefer to talk? Call 9346317790 (India)
             </a>
           </div>
           
@@ -157,11 +157,21 @@ export default async function LandingPage() {
               <div className="space-y-3">
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Consulting Doctor</p>
                 <h2 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-5xl">
-                  Kalyan Chakravarthy Kalwa
+                  Dr. Kalyan Chakravarthy Kalwa
                 </h2>
-                <p className="text-lg font-semibold text-zinc-600 dark:text-zinc-400">
-                  MBBS, DPharm
-                </p>
+                <div className="flex flex-wrap items-center gap-3 text-lg font-semibold text-zinc-600 dark:text-zinc-400">
+                  <span>MBBS, DPharm</span>
+                  <a
+                    href="https://www.linkedin.com/in/kalyankalwa/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Dr. Kalyan Chakravarthy Kalwa LinkedIn profile"
+                    className="inline-flex items-center gap-2 text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  >
+                    <Linkedin className="h-5 w-5" />
+                    LinkedIn
+                  </a>
+                </div>
               </div>
 
               <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
