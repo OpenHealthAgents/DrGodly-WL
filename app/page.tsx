@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone, Linkedin, Youtube, Instagram } from "lucide-react";
+import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DrGodlyLogo } from "@/components/DrGodlyLogo";
 import { getDetectedRegion } from "@/lib/region-server";
@@ -168,7 +168,7 @@ export default async function LandingPage() {
                     aria-label="Dr. Kalyan Chakravarthy Kalwa LinkedIn profile"
                     className="inline-flex items-center gap-2 text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   >
-                    <Linkedin className="h-5 w-5" />
+                    <LinkedInIcon className="h-5 w-5" />
                     LinkedIn
                   </a>
                 </div>
@@ -253,7 +253,7 @@ export default async function LandingPage() {
                 aria-label="DrGodly YouTube channel"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
-                <Youtube className="h-5 w-5" />
+                <YouTubeIcon className="h-5 w-5" />
               </a>
               <a
                 href="https://www.instagram.com/drgodlyapp/"
@@ -262,7 +262,7 @@ export default async function LandingPage() {
                 aria-label="DrGodly Instagram profile"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
-                <Instagram className="h-5 w-5" />
+                <InstagramIcon className="h-5 w-5" />
               </a>
               <a
                 href="https://www.linkedin.com/company/drgodly"
@@ -271,7 +271,7 @@ export default async function LandingPage() {
                 aria-label="DrGodly LinkedIn company page"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
-                <Linkedin className="h-5 w-5" />
+                <LinkedInIcon className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -302,5 +302,29 @@ function Stat({ value, label }: { value: string; label: string }) {
       <div className="text-3xl font-black">{value}</div>
       <p className="mt-1 text-sm text-zinc-500">{label}</p>
     </div>
+  );
+}
+
+function LinkedInIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.93v5.68H9.35V9h3.42v1.56h.05c.48-.9 1.65-1.85 3.4-1.85 3.64 0 4.31 2.4 4.31 5.51v6.23ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.78C.8 0 0 .77 0 1.72v20.55C0 23.23.8 24 1.78 24h20.44C23.2 24 24 23.23 24 22.27V1.72C24 .77 23.2 0 22.22 0Z" />
+    </svg>
+  );
+}
+
+function YouTubeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.7 12 3.7 12 3.7s-7.5 0-9.4.4A3 3 0 0 0 .5 6.2 31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.4 9.4.4 9.4.4s7.5 0 9.4-.4a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.5-5.8ZM9.6 15.3V8.7L15.7 12l-6.1 3.3Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 2.7A5.3 5.3 0 1 1 6.7 12 5.3 5.3 0 0 1 12 6.7Zm0 2A3.3 3.3 0 1 0 15.3 12 3.3 3.3 0 0 0 12 8.7Zm5.8-2.6a1.2 1.2 0 1 1-1.2-1.2 1.2 1.2 0 0 1 1.2 1.2Z" />
+    </svg>
   );
 }
