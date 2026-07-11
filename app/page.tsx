@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone, Linkedin } from "lucide-react";
+import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Star, Phone, Linkedin, Youtube, Instagram } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DrGodlyLogo } from "@/components/DrGodlyLogo";
 import { getDetectedRegion } from "@/lib/region-server";
@@ -242,7 +242,39 @@ export default async function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-100 py-12 dark:border-zinc-900">
-        <div className="mx-auto max-w-7xl px-6 text-center text-sm text-zinc-500">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 text-center text-sm text-zinc-500">
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Follow DrGodly</span>
+            <div className="flex items-center gap-3">
+              <a
+                href="https://www.youtube.com/@DrGodlyApp"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="DrGodly YouTube channel"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.instagram.com/drgodlyapp/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="DrGodly Instagram profile"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/drgodly"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="DrGodly LinkedIn company page"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+            </div>
+          </div>
           <p className="mb-4">© 2026 DrGodly. All rights reserved.</p>
           <p className="mx-auto max-w-3xl leading-relaxed opacity-70">
             Medication prescriptions are at the discretion of medical providers and may not be suitable for everyone. 
