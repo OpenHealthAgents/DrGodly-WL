@@ -21,6 +21,8 @@ export default async function LandingPage() {
           <nav className="hidden items-center gap-8 text-sm font-medium sm:flex">
             <Link href="#how-it-works" className="hover:text-zinc-500">How it Works</Link>
             <Link href="#pricing" className="hover:text-zinc-500">Pricing</Link>
+            <Link href="/blogs" className="hover:text-zinc-500">Blogs</Link>
+            <Link href="/events" className="hover:text-zinc-500">Events</Link>
             <Link href="/dashboard" className="hover:text-zinc-500">Dashboard</Link>
           </nav>
           <div className="flex items-center gap-4">
@@ -244,6 +246,12 @@ export default async function LandingPage() {
       <footer className="border-t border-zinc-100 py-12 dark:border-zinc-900">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 text-center text-sm text-zinc-500">
           <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link href="/blogs" className="text-xs font-bold uppercase tracking-widest text-zinc-400 transition hover:text-zinc-600 dark:hover:text-zinc-200">
+              Blogs
+            </Link>
+            <Link href="/events" className="text-xs font-bold uppercase tracking-widest text-zinc-400 transition hover:text-zinc-600 dark:hover:text-zinc-200">
+              Events
+            </Link>
             <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Follow DrGodly</span>
             <div className="flex items-center gap-3">
               <a
