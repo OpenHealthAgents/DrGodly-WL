@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, CalendarDays, Clock3 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenText, CalendarDays, Clock3 } from "lucide-react";
 
 export const blogPosts = [
   {
@@ -52,6 +52,13 @@ export default function BlogsPage() {
       <section className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-950">
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="max-w-3xl space-y-5">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm font-bold text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Home
+            </Link>
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1 text-xs font-bold uppercase tracking-widest text-zinc-500 shadow-sm dark:bg-zinc-900 dark:text-zinc-400">
               <BookOpenText className="h-3.5 w-3.5" />
               Blogs

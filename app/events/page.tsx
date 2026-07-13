@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock3, MapPin, Mic2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Mic2 } from "lucide-react";
 
 export const eventItems = [
   {
@@ -43,6 +43,13 @@ export default function EventsPage() {
       <section className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-950">
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="max-w-3xl space-y-5">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm font-bold text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Home
+            </Link>
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1 text-xs font-bold uppercase tracking-widest text-zinc-500 shadow-sm dark:bg-zinc-900 dark:text-zinc-400">
               <Mic2 className="h-3.5 w-3.5" />
               Events
@@ -101,6 +108,15 @@ export default function EventsPage() {
                 </div>
               </Link>
             ))}
+          </div>
+          <div className="mt-10 flex justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-5 py-3 text-sm font-bold text-zinc-900 transition-transform hover:scale-[1.02] active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Home
+            </Link>
           </div>
         </div>
       </section>
