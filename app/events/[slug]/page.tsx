@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock3, MapPin } from "lucide-react";
-import { eventItems } from "@/app/events/page";
+import { eventItems } from "@/lib/events";
 
 type Props = {
   params: Promise<{ slug: string }>;

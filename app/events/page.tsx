@@ -1,36 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Mic2 } from "lucide-react";
-
-export const eventItems = [
-  {
-    slug: "live-qa-starting-glp1-treatment",
-    title: "Live Q&A: Starting GLP-1 treatment",
-    date: "August 10, 2026",
-    time: "7:00 PM IST",
-    location: "Online",
-    description:
-      "A short live session covering how the intake works, what to expect after qualification, and how follow-up is handled.",
-  },
-  {
-    slug: "doctor-led-nutrition-workshop",
-    title: "Doctor-led nutrition workshop",
-    date: "August 24, 2026",
-    time: "6:30 PM IST",
-    location: "Online",
-    description:
-      "Practical meal planning guidance for users who want a simple routine that fits a weight-loss plan.",
-  },
-  {
-    slug: "progress-check-in-clinic",
-    title: "Progress check-in clinic",
-    date: "September 3, 2026",
-    time: "8:00 PM IST",
-    location: "Online",
-    description:
-      "A community check-in focused on adherence, side effects, and how to know when to speak with the care team.",
-  },
-];
+import { eventItems } from "@/lib/events";
 
 export const metadata: Metadata = {
   title: "Events | DrGodly",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock3 } from "lucide-react";
-import { blogPosts } from "@/app/blogs/page";
+import { blogPosts } from "@/lib/blogs";
 
 type Props = {
   params: Promise<{ slug: string }>;

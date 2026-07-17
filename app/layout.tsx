@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "DrGodly",
   description: "DrGodly health and wellness platform",
+  metadataBase: new URL(getSiteUrl()),
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
