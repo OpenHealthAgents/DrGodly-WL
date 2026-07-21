@@ -195,7 +195,7 @@ async function main() {
       type: "testimonial",
       title: "Life Changing Results",
       description: "Lost 12kg in 3 months and I've never felt better. The once-weekly injection is so convenient.",
-      metadata: { author: "Aarav S.", loss: "12kg lost", rating: 5 },
+      metadata: { author: "Ananya R.", loss: "12kg lost", rating: 5 },
       isActive: true,
     },
     {
@@ -203,7 +203,7 @@ async function main() {
       type: "testimonial",
       title: "Finally Found Success",
       description: "Finally something that worked. I had tried every diet under the sun before DrGodly.",
-      metadata: { author: "Priya N.", loss: "15kg lost", rating: 5 },
+      metadata: { author: "Vikram S.", loss: "15kg lost", rating: 5 },
       isActive: true,
     },
     {
