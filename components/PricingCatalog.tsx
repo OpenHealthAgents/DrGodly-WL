@@ -221,6 +221,54 @@ const PRODUCTS: Product[] = [
     format: "Cartridge",
     price: 3350,
     imageId: "1dxnDb8v4JeBhfU78OO6ZuogOpQ2Bvu36"
+  },
+  {
+    name: "Yurpeak 7.5mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 1294,
+    imageId: "1UYc7HlWCIo7Rv-dX7mo0ZKAo21Su4SXP"
+  },
+  {
+    name: "Yurpeak 15mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 1294,
+    imageId: "15d87tnkx9WiA0LtWHjKBdFIKuAxQcI9G"
+  },
+  {
+    name: "Yurpeak 12.5mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 1298,
+    imageId: "15Y7tgLp7R-9kHhnVI215ex6n_Ntup2qD"
+  },
+  {
+    name: "Yurpeak 10mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 1298,
+    imageId: "1kFVccDZbgO5Qgm7DDHUyAytVdE4LnE3F"
+  },
+  {
+    name: "Yurpeak 5mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 13125,
+    imageId: "1BTK0vnfGro4Dpmlq42c7mBIcfRn0r-RU"
+  },
+  {
+    name: "Yurpeak 2.5mg KwikPen pre-filled pen of 3 ml solution for injection",
+    substance: "Tirzepatide",
+    manufacturer: "Cipla",
+    format: "Pre-filled Pen",
+    price: 16406.25,
+    imageId: "1s6DY2mAYDhNm_BMOzz1jP4mlArTb6Vup"
   }
 ];
 
@@ -240,7 +288,8 @@ export default function PricingCatalog() {
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                            p.manufacturer.toLowerCase().includes(search.toLowerCase());
+                            p.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
+                            p.substance.toLowerCase().includes(search.toLowerCase());
       const matchesFormat = selectedFormat === "all" || p.format === selectedFormat;
       const matchesManufacturer = selectedManufacturer === "all" || p.manufacturer === selectedManufacturer;
       return matchesSearch && matchesFormat && matchesManufacturer;
@@ -359,7 +408,7 @@ export default function PricingCatalog() {
         <div className="space-y-1">
           <p className="font-bold text-zinc-850 dark:text-zinc-200">Prescription Requirement & Medical Consultation</p>
           <p>
-            All listed GLP-1 (Semaglutide) formulations require a valid doctor prescription. Eligible patients receive structured dosage progression plans, continuous clinical support, and medication delivery directly from registered pharmacies. Take the online screening to verify qualification.
+            All listed GLP-1 and dual GIP/GLP-1 (Semaglutide & Tirzepatide) formulations require a valid doctor prescription. Eligible patients receive structured dosage progression plans, continuous clinical support, and medication delivery directly from registered pharmacies. Take the online screening to verify qualification.
           </p>
         </div>
       </div>
