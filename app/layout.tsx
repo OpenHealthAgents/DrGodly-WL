@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ChatAssistant } from "@/components/ChatAssistant";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { getSiteUrl } from "@/lib/site";
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         >
           {children}
           <ChatAssistant />
+          <WhatsAppWidget />
         </ThemeProvider>
       </body>
     </html>

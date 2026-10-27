@@ -1,17 +1,23 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "module": "CommonJS",
     "moduleResolution": "Node",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": ".test-build",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "types": ["node"]
   },
   "include": [
     "tests/**/*.ts",
+    "lib/whatsapp.ts",
+    "lib/whatsapp-ai-intake.ts",
     "lib/eligibility.ts",
     "lib/intake-state.ts",
     "lib/personalization.ts",
